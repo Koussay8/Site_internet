@@ -24,16 +24,36 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Animations */
+/* Animations - FAST */
 .hidden-el {
     opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+    transform: translateY(20px);
+    transition: all 0.4s ease-out;
 }
 
 .visible-el {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Typing Cursor */
+.text-gradient.typed::after {
+    content: '|';
+    animation: blink 1s infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
 }
 
 body {
@@ -341,7 +361,26 @@ ul {
 .card:hover {
     transform: translateY(-10px);
     border-color: rgba(0, 240, 255, 0.3);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 240, 255, 0.1);
+}
+
+/* Premium Card Glow on Hover */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 240, 255, 0.15), transparent 40%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    border-radius: 20px;
+}
+
+.card:hover::before {
+    opacity: 1;
 }
 
 .card-icon {
@@ -399,4 +438,50 @@ footer {
     display: flex;
     justify-content: space-between;
     margin-bottom: 3rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--primary-color), var(--secondary-color));
+    border-radius: 4px;
+}
+
+/* Glow Cursor Trail */
+body::after {
+    content: '';
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+body:hover::after {
+    opacity: 1;
+}
+
+/* Hero enhanced */
+.hero-content {
+    text-align: center;
+    max-width: 800px;
+    z-index: 10;
+    transition: transform 0.1s ease-out;
+}
+
+/* Button magnetic effect reset */
+.btn-primary {
+    transition: transform 0.2s ease-out, box-shadow 0.2s;
 }

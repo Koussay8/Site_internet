@@ -139,14 +139,14 @@
                 <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Remplissez ce formulaire
                     pour une consultation gratuite.</p>
 
-                <form style="display: flex; flex-direction: column; gap: 1rem;">
-                    <input type="text" placeholder="Nom Complet"
+                <form id="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <input type="text" name="nom" placeholder="Nom Complet" required
                         style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 1rem; color: white; border-radius: 8px;">
-                    <input type="email" placeholder="Email Professionnel"
+                    <input type="email" name="email" placeholder="Email Professionnel" required
                         style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 1rem; color: white; border-radius: 8px;">
-                    <textarea placeholder="Votre Message" rows="4"
+                    <textarea name="message" placeholder="Votre Message" rows="4" required
                         style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 1rem; color: white; border-radius: 8px;"></textarea>
-                    <button type="button" class="btn btn-primary"
+                    <button type="submit" class="btn btn-primary"
                         style="width: 100%; margin-top: 1rem;">Envoyer</button>
                 </form>
             </div>
