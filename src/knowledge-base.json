@@ -1,0 +1,184 @@
+{
+    "entreprise": {
+        "nom": "NovaSolutions",
+        "specialite": "Automatisation IA pour entreprises",
+        "annee_creation": 2024,
+        "clients_aides": 47,
+        "heures_economisees": 12500,
+        "taux_satisfaction": 98
+    },
+    "statistiques_globales": {
+        "reduction_no_shows": "75%",
+        "gain_temps_moyen": "20h/semaine",
+        "roi_moyen": "300%",
+        "delai_mise_en_place": "2-4 semaines"
+    },
+    "produits": [
+        {
+            "id": 1,
+            "nom": "L'Agent de Qualification & Prise de RDV (24/7)",
+            "description": "Agent IA qui qualifie les prospects et prend des rendez-vous automatiquement, 24h/24 et 7j/7.",
+            "domaines": [
+                "Santé (dentistes, esthétique)",
+                "Immobilier",
+                "Services (coiffeurs, garages)"
+            ],
+            "avantages": [
+                "Réduit drastiquement les 'No-shows'",
+                "Libère le secrétariat en filtrant les demandes sérieuses",
+                "Envoie vers Doctolib ou Calendly automatiquement"
+            ],
+            "resultat_client": "Cabinet dentaire à Lyon : -70% de no-shows en 2 mois",
+            "prix_indicatif": "À partir de 497€/mois",
+            "ideal_pour": "Entreprises avec beaucoup de prises de RDV qui perdent du temps avec des prospects non qualifiés"
+        },
+        {
+            "id": 2,
+            "nom": "L'Assistant Vocal 'Mains Libres' pour Artisans",
+            "description": "Service vocal IA qui répond au téléphone quand l'artisan est occupé sur un chantier.",
+            "domaines": [
+                "Artisans du bâtiment",
+                "Couvreurs",
+                "Électriciens",
+                "Plombiers"
+            ],
+            "avantages": [
+                "Rassure le client immédiatement",
+                "Prend les coordonnées",
+                "Envoie un SMS de confirmation",
+                "Ne rate plus jamais un appel"
+            ],
+            "resultat_client": "Un seul chantier sauvé par an rentabilise l'outil",
+            "prix_indicatif": "À partir de 197€/mois",
+            "ideal_pour": "Artisans souvent sur les toits ou en chantier qui ratent des appels importants"
+        },
+        {
+            "id": 3,
+            "nom": "Le Calculateur d'Éligibilité & Devis IA",
+            "description": "Calculateur intelligent qui pré-qualifie les clients et génère des devis automatiquement.",
+            "domaines": [
+                "Secteur Solaire (Photovoltaïque)",
+                "Rénovation Énergétique (MaPrimeRénov')"
+            ],
+            "avantages": [
+                "Pré-qualifie le client (exposition toit, revenus)",
+                "Ne transmet aux commerciaux que les dossiers finançables",
+                "Réduit le coût d'acquisition de 60%"
+            ],
+            "resultat_client": "Installateur solaire : coût par lead passé de 45€ à 18€",
+            "prix_indicatif": "À partir de 397€/mois",
+            "ideal_pour": "Entreprises où le coût du lead est très élevé (30-60€) et beaucoup de prospects non qualifiés"
+        },
+        {
+            "id": 4,
+            "nom": "L'Agent WhatsApp de Commande B2B",
+            "description": "IA qui interprète les messages vocaux ou texte des clients pros pour passer des commandes automatiquement.",
+            "domaines": [
+                "Grossistes (MIN de Lomme)",
+                "Fournisseurs de matériaux",
+                "Logistique"
+            ],
+            "avantages": [
+                "Remplace la prise de commande chaotique par téléphone/mail",
+                "Comprend les messages comme 'Il me faut 10 sacs de ciment'",
+                "Vérifie le stock en temps réel",
+                "Génère le bon de commande automatiquement"
+            ],
+            "resultat_client": "Grossiste alimentaire : 3h de saisie manuelle économisées par jour",
+            "prix_indicatif": "À partir de 597€/mois",
+            "ideal_pour": "Entreprises B2B qui reçoivent des commandes par téléphone ou messages vocaux"
+        },
+        {
+            "id": 5,
+            "nom": "L'Assistant Immo / Locataire IA",
+            "description": "Agent IA qui traite les questions récurrentes des locataires et qualifie les dossiers d'acheteurs.",
+            "domaines": [
+                "Agences immobilières",
+                "Syndics",
+                "Gestionnaires de biens"
+            ],
+            "avantages": [
+                "Répond aux questions récurrentes ('comment purger mon radiateur ?')",
+                "Qualifie les dossiers des candidats acheteurs (budget, apport, garant)",
+                "Libère du temps avant la première visite humaine"
+            ],
+            "resultat_client": "Agence immobilière Paris : 40% de temps gagné sur la qualification",
+            "prix_indicatif": "À partir de 347€/mois",
+            "ideal_pour": "Agences et syndics submergés par les questions répétitives des locataires"
+        },
+        {
+            "id": 6,
+            "nom": "Le Générateur de Contenu & SEO Local IA",
+            "description": "IA qui rédige des articles de blog optimisés pour le SEO local sans intervention humaine.",
+            "domaines": [
+                "Professions libérales (Avocats, Notaires)",
+                "Instituts de soin"
+            ],
+            "avantages": [
+                "Idéal pour les sites 'vieillissants'",
+                "Rédige des articles sur des cas précis (ex: 'L'Hydrafacial en hiver')",
+                "Attire du trafic local qualifié",
+                "Le client n'écrit aucune ligne"
+            ],
+            "resultat_client": "Institut de beauté Lille : +180% de trafic organique en 4 mois",
+            "prix_indicatif": "À partir de 297€/mois",
+            "ideal_pour": "Professions libérales et commerces locaux avec un site web peu actif"
+        },
+        {
+            "id": 7,
+            "nom": "Le Module de Simulation Immersive IA",
+            "description": "Outil de vente puissant qui permet au client de visualiser son futur projet à partir d'une simple photo.",
+            "domaines": [
+                "Paysagistes",
+                "Piscinistes",
+                "Architectes d'intérieur"
+            ],
+            "avantages": [
+                "Visualise le futur jardin ou piscine à partir d'une photo du terrain",
+                "Déclenche l'achat émotionnel",
+                "Différencie de la concurrence"
+            ],
+            "resultat_client": "Pisciniste Bordeaux : taux de conversion devis +35%",
+            "prix_indicatif": "À partir de 697€/mois",
+            "ideal_pour": "Entreprises de services visuels où le client a du mal à se projeter"
+        },
+        {
+            "id": 8,
+            "nom": "Le Prospecteur Automatisé B2B (Cold Outreach)",
+            "description": "Système de scraping et IA pour envoyer des messages ultra-personnalisés aux décideurs.",
+            "domaines": [
+                "Nettoyage Industriel",
+                "Entreprises de Travaux Publics"
+            ],
+            "avantages": [
+                "Cible les décideurs (syndics, mairies)",
+                "Messages personnalisés automatiquement",
+                "Indispensable pour les contrats récurrents à gros volume"
+            ],
+            "resultat_client": "Entreprise de nettoyage : 12 nouveaux contrats en 3 mois",
+            "prix_indicatif": "À partir de 797€/mois",
+            "ideal_pour": "Entreprises B2B qui cherchent des contrats récurrents avec de gros clients"
+        }
+    ],
+    "temoignages": [
+        {
+            "client": "Dr. Martin",
+            "entreprise": "Cabinet Dentaire Lyon",
+            "produit": "Agent de Qualification",
+            "temoignage": "Nos no-shows ont chuté de 70%. L'IA filtre parfaitement les vrais patients."
+        },
+        {
+            "client": "Jean-Pierre R.",
+            "entreprise": "Plombier Indépendant",
+            "produit": "Assistant Vocal Mains Libres",
+            "temoignage": "Je ne rate plus un seul appel même quand je suis sous une baignoire."
+        },
+        {
+            "client": "Sophie L.",
+            "entreprise": "Agence Immobilière Paris",
+            "produit": "Assistant Immo IA",
+            "temoignage": "40% de temps gagné. Mes agents se concentrent sur les visites, pas les questions basiques."
+        }
+    ],
+    "instructions_chatbot": "Tu es l'assistant commercial de NovaSolutions. Tu dois aider les visiteurs à trouver le produit IA qui correspond à leur besoin. Pose des questions sur leur secteur d'activité, leurs problèmes actuels, et recommande le produit adapté avec des statistiques réelles de nos clients. Sois professionnel mais chaleureux."
+}

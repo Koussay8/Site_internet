@@ -21,9 +21,9 @@
             <a href="#" class="logo">Nova<span class="text-gradient">Solutions</span></a>
             <nav>
                 <ul class="nav-links">
+                    <li><a href="#agents">Nos Agents</a></li>
                     <li><a href="#services">Services</a></li>
                     <li><a href="#about">À propos</a></li>
-                    <li><a href="#innovation">Innovation</a></li>
                     <li><a href="#contact" class="btn btn-outline nav-btn">Contact</a></li>
                 </ul>
             </nav>
@@ -35,55 +35,222 @@
         </div>
     </header>
 
-    <!-- App Entry -->
-    <div id="app">
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-bg"></div>
-            <div class="container hero-content">
-                <span class="badge">L'Innovation Sans Limite</span>
-                <h1 class="hero-title">L'IA au service de votre <br><span class="text-gradient">Croissance</span></h1>
-                <p class="hero-subtitle">Transformez vos opérations avec des automatisations intelligentes. Nous
-                    construisons le futur de votre entreprise, aujourd'hui.</p>
-                <div class="hero-btns">
-                    <a href="#contact" class="btn btn-primary">Démarrer le Projet</a>
-                    <a href="#services" class="btn btn-outline">Découvrir nos Solutions</a>
-                </div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <span class="badge">🚀 Déjà 47+ entreprises accompagnées</span>
+            <h1 class="hero-title">L'IA au service de votre <br><span class="text-gradient">Croissance</span></h1>
+            <p class="hero-subtitle">Transformez vos opérations avec des automatisations intelligentes. Nous
+                construisons le futur de votre entreprise, aujourd'hui.</p>
+            <div class="hero-btns">
+                <a href="#contact" class="btn btn-primary">Démarrer le Projet</a>
+                <a href="#agents" class="btn btn-outline">Voir nos Agents IA</a>
             </div>
-        </section>
-    </div>
+        </div>
+    </section>
 
-    <!-- Services Section -->
-    <section id="services" class="section-padding">
+    <!-- Social Proof Stats -->
+    <section class="stats-section">
+        <div class="container stats-grid">
+            <div class="stat-item">
+                <span class="stat-number" data-target="47">0</span>
+                <span class="stat-label">Entreprises Accompagnées</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="12500">0</span>
+                <span class="stat-label">Heures Économisées</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="98">0</span>
+                <span class="stat-label">% Satisfaction Client</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="300">0</span>
+                <span class="stat-label">% ROI Moyen</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nos Agents IA Section -->
+    <section id="agents" class="section-padding">
         <div class="container">
             <div class="section-title-wrap">
-                <span class="section-subtitle">Nos Expertises</span>
-                <h2 class="section-title">Solutions d'<span class="text-gradient">Automatisation</span></h2>
-                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Nous concevons des écosystemes
-                    digitaux qui travaillent pour vous 24/7.</p>
+                <span class="section-subtitle">Nos Produits</span>
+                <h2 class="section-title">Agents <span class="text-gradient">IA</span> Prêts à l'Emploi</h2>
+                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Des solutions clé en main,
+                    déployées en 2-4 semaines, avec des résultats mesurables dès le premier mois.</p>
+            </div>
+
+            <div class="agents-grid">
+                <!-- Agent 1 -->
+                <div class="agent-card">
+                    <div class="agent-icon">📞</div>
+                    <h3>Agent de Qualification & RDV 24/7</h3>
+                    <p class="agent-domain">Santé • Immobilier • Services</p>
+                    <p class="agent-desc">Qualifie vos prospects et prend des RDV automatiquement, même à 3h du matin.
+                    </p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">-70% no-shows</span>
+                        <span class="stat-source">Cabinet dentaire Lyon</span>
+                    </div>
+                </div>
+
+                <!-- Agent 2 -->
+                <div class="agent-card">
+                    <div class="agent-icon">🎙️</div>
+                    <h3>Assistant Vocal Mains Libres</h3>
+                    <p class="agent-domain">Artisans • Couvreurs • Électriciens</p>
+                    <p class="agent-desc">Répond au téléphone quand vous êtes sur un chantier. Plus jamais d'appel
+                        manqué.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">1 chantier = rentabilisé</span>
+                        <span class="stat-source">Un appel sauvé par mois suffit</span>
+                    </div>
+                </div>
+
+                <!-- Agent 3 -->
+                <div class="agent-card">
+                    <div class="agent-icon">☀️</div>
+                    <h3>Calculateur Éligibilité & Devis IA</h3>
+                    <p class="agent-domain">Solaire • Rénovation Énergétique</p>
+                    <p class="agent-desc">Pré-qualifie les clients et génère des devis. Ne transmettez que les dossiers
+                        finançables.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">Coût/lead : 45€ → 18€</span>
+                        <span class="stat-source">Installateur photovoltaïque</span>
+                    </div>
+                </div>
+
+                <!-- Agent 4 -->
+                <div class="agent-card">
+                    <div class="agent-icon">💬</div>
+                    <h3>Agent WhatsApp Commande B2B</h3>
+                    <p class="agent-domain">Grossistes • Fournisseurs • Logistique</p>
+                    <p class="agent-desc">Interprète les messages vocaux ("10 sacs de ciment") et génère le bon de
+                        commande.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">3h/jour économisées</span>
+                        <span class="stat-source">Grossiste alimentaire</span>
+                    </div>
+                </div>
+
+                <!-- Agent 5 -->
+                <div class="agent-card">
+                    <div class="agent-icon">🏠</div>
+                    <h3>Assistant Immo / Locataire IA</h3>
+                    <p class="agent-domain">Agences • Syndics • Gestionnaires</p>
+                    <p class="agent-desc">Traite les questions récurrentes et qualifie les dossiers avant la première
+                        visite.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">+40% temps gagné</span>
+                        <span class="stat-source">Agence immobilière Paris</span>
+                    </div>
+                </div>
+
+                <!-- Agent 6 -->
+                <div class="agent-card">
+                    <div class="agent-icon">✍️</div>
+                    <h3>Générateur Contenu & SEO Local</h3>
+                    <p class="agent-domain">Avocats • Notaires • Instituts de soin</p>
+                    <p class="agent-desc">Rédige des articles SEO optimisés sans que vous n'écriviez une seule ligne.
+                    </p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">+180% trafic organique</span>
+                        <span class="stat-source">Institut beauté Lille - 4 mois</span>
+                    </div>
+                </div>
+
+                <!-- Agent 7 -->
+                <div class="agent-card">
+                    <div class="agent-icon">🎨</div>
+                    <h3>Module Simulation Immersive IA</h3>
+                    <p class="agent-domain">Paysagistes • Piscinistes • Architectes</p>
+                    <p class="agent-desc">Visualisez le projet final à partir d'une simple photo. Déclenchez l'achat
+                        émotionnel.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">+35% conversion devis</span>
+                        <span class="stat-source">Pisciniste Bordeaux</span>
+                    </div>
+                </div>
+
+                <!-- Agent 8 -->
+                <div class="agent-card">
+                    <div class="agent-icon">🎯</div>
+                    <h3>Prospecteur Automatisé B2B</h3>
+                    <p class="agent-domain">Nettoyage Industriel • Travaux Publics</p>
+                    <p class="agent-desc">Messages ultra-personnalisés aux décideurs. Idéal pour les contrats
+                        récurrents.</p>
+                    <div class="agent-stat">
+                        <span class="stat-highlight">12 contrats en 3 mois</span>
+                        <span class="stat-source">Entreprise nettoyage</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section-padding" style="background: rgba(255,255,255,0.02);">
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-subtitle">Notre Approche</span>
+                <h2 class="section-title">Comment nous <span class="text-gradient">travaillons</span></h2>
             </div>
 
             <div class="cards-grid">
-                <!-- Card 1 -->
                 <div class="card">
-                    <div class="card-icon">⚡</div>
-                    <h3>Workflow Automation</h3>
-                    <p>Connectez vos applications (CRM, Email, Slack) pour éliminer les tâches répétitives et gagner
-                        20h+ par semaine.</p>
-                </div>
-                <!-- Card 2 -->
-                <div class="card">
-                    <div class="card-icon">🤖</div>
-                    <h3>Agents IA & Chatbots</h3>
-                    <p>Service client instantané et intelligent capable de qualifier des leads et de répondre aux
-                        questions complexes.</p>
-                </div>
-                <!-- Card 3 -->
-                <div class="card">
-                    <div class="card-icon">📊</div>
-                    <h3>Analyse de Données</h3>
-                    <p>Transformez vos données brutes en insights actionnables grâce à nos algorithmes de prédiction.
+                    <div class="card-icon">🔍</div>
+                    <h3>1. Audit Gratuit</h3>
+                    <p>Nous analysons vos processus actuels et identifions les opportunités d'automatisation à fort ROI.
                     </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚙️</div>
+                    <h3>2. Déploiement Rapide</h3>
+                    <p>En 2-4 semaines, votre agent IA est opérationnel et intégré à vos outils existants.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📈</div>
+                    <h3>3. Optimisation Continue</h3>
+                    <p>Nous mesurons les résultats et améliorons l'IA en continu pour maximiser votre ROI.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section-padding">
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-subtitle">Témoignages</span>
+                <h2 class="section-title">Ils nous font <span class="text-gradient">confiance</span></h2>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Nos no-shows ont chuté de 70%. L'IA filtre parfaitement les vrais
+                        patients. Je recommande à 100%."</p>
+                    <div class="testimonial-author">
+                        <strong>Dr. Martin</strong>
+                        <span>Cabinet Dentaire Lyon</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Je ne rate plus un seul appel même quand je suis sous une baignoire. Un
+                        investissement rentabilisé en 1 mois."</p>
+                    <div class="testimonial-author">
+                        <strong>Jean-Pierre R.</strong>
+                        <span>Plombier Indépendant</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"40% de temps gagné. Mes agents se concentrent sur les visites, pas les
+                        questions basiques."</p>
+                    <div class="testimonial-author">
+                        <strong>Sophie L.</strong>
+                        <span>Agence Immobilière Paris</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -104,28 +271,7 @@
                 <p style="color: var(--text-muted); margin-bottom: 2rem;">
                     Une approche ouverte, transparente et résolument tournée vers l'avenir.
                 </p>
-                <a href="#contact" class="btn btn-outline">En savoir plus</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Innovation / Why Us -->
-    <section id="innovation" class="section-padding">
-        <div class="container text-center" style="text-align: center;">
-            <h2 class="section-title">Pourquoi <span class="text-gradient">Nous ?</span></h2>
-            <div class="cards-grid" style="margin-top: 3rem;">
-                <div class="card" style="text-align: left;">
-                    <h3 style="color: var(--primary-color);">Vision Innovante</h3>
-                    <p>Toujours à la pointe des dernières avancées (LLMs, Agents Autonomes).</p>
-                </div>
-                <div class="card" style="text-align: left;">
-                    <h3 style="color: var(--secondary-color);">Transparence Totale</h3>
-                    <p>Pas de boîtes noires. Vous garder le contrôle sur vos données et vos processus.</p>
-                </div>
-                <div class="card" style="text-align: left;">
-                    <h3 style="color: var(--accent-color);">ROI Mesurable</h3>
-                    <p>Nos solutions sont conçues pour générer de la valeur dès le premier jour.</p>
-                </div>
+                <a href="#contact" class="btn btn-primary">Discutons de votre projet</a>
             </div>
         </div>
     </section>
@@ -166,8 +312,8 @@
                 <div style="display: flex; gap: 3rem;">
                     <ul style="color: var(--text-muted); line-height: 2;">
                         <li style="color: white; font-weight: 600; margin-bottom: 0.5rem;">Menu</li>
+                        <li><a href="#agents">Nos Agents</a></li>
                         <li><a href="#services">Services</a></li>
-                        <li><a href="#about">À propos</a></li>
                         <li><a href="#contact">Contact</a></li>
                     </ul>
                     <ul style="color: var(--text-muted); line-height: 2;">
@@ -179,10 +325,29 @@
             </div>
             <div
                 style="text-align: center; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid #222; padding-top: 2rem;">
-                &copy; 2024 NovaSolutions. Tous droits réservés.
+                &copy; 2025 NovaSolutions. Tous droits réservés.
             </div>
         </div>
     </footer>
+
+    <!-- Chatbot Widget -->
+    <div id="chatbot-widget">
+        <button id="chatbot-toggle" class="chatbot-btn">
+            <span class="chat-icon">💬</span>
+            <span class="close-icon">✕</span>
+        </button>
+        <div id="chatbot-container" class="chatbot-hidden">
+            <div class="chatbot-header">
+                <span>🤖 Assistant NovaSolutions</span>
+                <small>Trouvez la solution IA parfaite pour vous</small>
+            </div>
+            <div id="chatbot-messages"></div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatbot-input" placeholder="Décrivez votre activité ou problème...">
+                <button id="chatbot-send">➤</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
 </body>
