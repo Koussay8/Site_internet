@@ -185,17 +185,23 @@ let conversationHistory = [];
 
 // System prompt - flexible and can handle any question
 const systemPrompt = `Tu es Nova, l'assistant virtuel de l'agence NovaSolutions.
-TA MISSION : Aider les visiteurs à trouver LA solution d'automatisation adaptée à leurs problèmes spécifiques.
-TON STYLE : Bref, direct, professionnel mais empathique. Jamais de réponses longues.
+TA MISSION : Aider les visiteurs à trouver LA solution d'automatisation adaptée.
+TON STYLE : Bref, moderne, et "respirant" (pas de blocs de texte). 
 
 RÈGLES D'OR :
-1. Tes réponses doivent faire 2-3 phrases maximum.
-2. Ne recrache pas la documentation. Utilise-la pour COMPRENDRE le problème du client.
-3. Si la demande est vague ("je veux de l'IA"), pose une question de clarification ("Quel est votre secteur d'activité ?" ou "Quels problèmes rencontrez-vous au quotidien ?").
-4. Ne cite pas de noms de clients existants (ex: ne dis pas "Comme le Dr Martin"). Parle de "nos clients dentistes" ou "un cabinet partenaire".
-5. Si tu ne sais pas, propose un audit humain gratuit.
+1. Tes réponses doivent être aérées (utilise des sauts de ligne).
+2. Maximum 2 phrases par paragraphe.
+3. Utilise des listes à puces si tu cites plusieurs avantages.
+4. Ton ton est professionnel mais moderne (comme un expert tech accessible).
+5. Ne cite jamais de noms de clients réels.
+6. Ne récite pas la knowledge base, utilise-la pour donner conseil.
 
-BASE DE CONNAISSANCES (Utilise ces exemples pour reconnaitre les problèmes) :
+STRUCTURE DE RÉPONSE IDÉALE :
+- 1 phrase d'empathie (Ex: "Je comprends, c'est un défi courant...")
+- 1 phrase de solution précise avec une stat (Ex: "Notre agent de qualification règle ça en filtrant...")
+- 1 question d'engagement ou proposition d'appel.
+
+BASE DE CONNAISSANCES :
 
 A. SECTEUR SANTÉ & BIEN-ÊTRE
 - Dentistes/Orthodontistes : Le problème n°1 est le "No-Show" (RDV non honoré). Solution : Agent de confirmation et rappel qui réduit les no-shows de 70%.
@@ -230,18 +236,39 @@ if (chatbotToggle) {
 
         // Send welcome message on first open
         if (!chatbotContainer.classList.contains('chatbot-hidden') && chatbotMessages.children.length === 0) {
-            addMessage("Bonjour ! 👋 Je suis l'assistant NovaSolutions. Dites-moi votre secteur d'activité ou votre problème actuel, et je vous proposerai la solution IA idéale.", 'bot');
+            simulateTyping("Bonjour ! 👋 Je suis Nova. Quel est votre secteur d'activité ou votre défi actuel ?", 'bot');
         }
     });
 }
 
-// Add message to chat
+// Add message to chat (Instant for user)
 function addMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}`;
     messageDiv.textContent = text;
     chatbotMessages.appendChild(messageDiv);
     chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Simulate typing effect (For bot)
+function simulateTyping(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${sender}`;
+    chatbotMessages.appendChild(messageDiv);
+
+    let index = 0;
+    const speed = 15; // ms per char (faster/smoother)
+
+    function typeChar() {
+        if (index < text.length) {
+            messageDiv.textContent += text.charAt(index);
+            index++;
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            setTimeout(typeChar, speed);
+        }
+    }
+
+    typeChar();
 }
 
 // Show typing indicator
@@ -262,6 +289,9 @@ function removeTyping() {
 // Send message to Groq API
 async function sendToGroq(userMessage) {
     conversationHistory.push({ role: 'user', content: userMessage });
+
+    // User message is added instantly via event listener in index.html (or should be)
+    // Note: The click handler isn't shown here but assumes addMessage('user') is called before this.
 
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -294,12 +324,16 @@ async function sendToGroq(userMessage) {
         }
 
         const botMessage = data.choices[0].message.content;
+
+        // Use simulateTyping instead of addMessage
+        simulateTyping(botMessage, 'bot');
+
         conversationHistory.push({ role: 'assistant', content: botMessage });
         return botMessage;
 
     } catch (error) {
         console.error('Groq API Error:', error);
-        return `Je suis là pour vous aider ! En attendant, voici ce que nous proposons : automatisation des RDV, assistants vocaux, chatbots, et plus encore. Contactez-nous via le formulaire pour un audit gratuit ! 🚀`;
+        simulateTyping("Je rencontre une petite erreur technique. N'hésitez pas à nous contacter directement via le formulaire !", 'bot');
     }
 }
 
