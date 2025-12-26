@@ -140,7 +140,7 @@ if (contactForm) {
         submitBtn.disabled = true;
 
         try {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWdZwgNeU1-WjFcvUlD7UCR4WtSD_tAhGGxPg7oKMnq-y8kmmOGwhUahxGapdRwfcD_Q/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4-nMQhv7Qbh-F2ujp7o4v4MzwwazObFLpHrNO1gR8SxuH2KWYeP8F0Qt4rqojo3dfvw/exec';
 
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -281,7 +281,7 @@ function removeTyping() {
 }
 
 // Google Script URL for bookings
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyI9tuNrrg1ydzC9hUsPyWPh2lA3nbNIONjas7ZkiCm_dm6Ok8VxWrGLidHxFYK9CYscQ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4-nMQhv7Qbh-F2ujp7o4v4MzwwazObFLpHrNO1gR8SxuH2KWYeP8F0Qt4rqojo3dfvw/exec';
 
 async function sendBookingToSheet(bookingData) {
     try {
