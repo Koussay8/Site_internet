@@ -4,6 +4,14 @@ import knowledgeBase from './knowledge-base.json'
 console.log('NovaSolutions Loaded ✨');
 
 // ============================================
+// 0. SCROLL TO TOP ON REFRESH
+// ============================================
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
+// ============================================
 // 1. HEADER SCROLL EFFECT
 // ============================================
 const header = document.querySelector('.header');
@@ -161,6 +169,7 @@ if (contactForm) {
 // ============================================
 // 7. CHATBOT WITH GROQ API (LLAMA3)
 // ============================================
+// API key from .env file (VITE_GROQ_API_KEY)
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 const chatbotToggle = document.getElementById('chatbot-toggle');
@@ -171,35 +180,34 @@ const chatbotSend = document.getElementById('chatbot-send');
 
 let conversationHistory = [];
 
-// System prompt with knowledge base
-const systemPrompt = `Tu es l'assistant commercial intelligent de NovaSolutions, une agence spécialisée en automatisation IA.
+// System prompt - flexible and can handle any question
+const systemPrompt = `Tu es l'assistant commercial de NovaSolutions, une agence spécialisée en automatisation IA pour les entreprises.
 
-INFORMATIONS SUR L'ENTREPRISE:
+CONTEXTE ENTREPRISE:
 - Nom: NovaSolutions
-- Spécialité: Automatisation IA pour entreprises
-- Clients aidés: 47+
+- Clients aidés: 47+ entreprises
 - Taux de satisfaction: 98%
 - ROI moyen: 300%
+- Délai de mise en place: 2-4 semaines
 
-PRODUITS DISPONIBLES:
-${knowledgeBase.produits.map(p => `
-${p.id}. ${p.nom}
-   - Domaines: ${p.domaines.join(', ')}
-   - Résultat client: ${p.resultat_client}
-   - Prix: ${p.prix_indicatif}
-   - Idéal pour: ${p.ideal_pour}
-`).join('\n')}
+NOS 8 PRODUITS (avec résultats clients réels):
+1. Agent de Qualification & RDV 24/7 - Pour Santé/Immobilier/Services - Résultat: -70% no-shows (cabinet dentaire Lyon)
+2. Assistant Vocal Mains Libres - Pour Artisans/Couvreurs/Plombiers - Un chantier sauvé = rentabilisé
+3. Calculateur Éligibilité & Devis IA - Pour Solaire/Rénovation - Coût lead: 45€→18€
+4. Agent WhatsApp Commande B2B - Pour Grossistes/Logistique - 3h/jour économisées
+5. Assistant Immo/Locataire IA - Pour Agences/Syndics - +40% temps gagné
+6. Générateur Contenu & SEO Local - Pour Avocats/Notaires/Instituts - +180% trafic en 4 mois
+7. Module Simulation Immersive IA - Pour Paysagistes/Piscinistes - +35% conversion devis
+8. Prospecteur Automatisé B2B - Pour Nettoyage/BTP - 12 contrats en 3 mois
 
-TÉMOIGNAGES:
-${knowledgeBase.temoignages.map(t => `- ${t.client} (${t.entreprise}): "${t.temoignage}"`).join('\n')}
-
-INSTRUCTIONS:
-1. Pose des questions sur le secteur d'activité du visiteur et ses problèmes actuels
-2. Recommande le produit le plus adapté avec des statistiques réelles
-3. Sois professionnel, chaleureux et concis (max 3-4 phrases)
-4. Cite toujours un résultat client réel pour crédibilité
-5. Propose un appel gratuit à la fin si le prospect semble intéressé
-6. Réponds TOUJOURS en français`;
+COMMENT RÉPONDRE:
+- Sois chaleureux, professionnel et concis (2-4 phrases max)
+- Si le visiteur décrit son activité ou problème → recommande LE produit le plus adapté avec une stat réelle
+- Si le visiteur pose une question générale → réponds de manière utile et oriente vers nos solutions
+- Si le visiteur demande quelque chose hors sujet → redirige poliment vers nos services
+- Cite toujours un résultat client réel pour crédibilité
+- Propose un appel gratuit si le prospect semble intéressé
+- Réponds TOUJOURS en français`;
 
 // Toggle chatbot
 if (chatbotToggle) {
@@ -209,7 +217,7 @@ if (chatbotToggle) {
 
         // Send welcome message on first open
         if (!chatbotContainer.classList.contains('chatbot-hidden') && chatbotMessages.children.length === 0) {
-            addMessage("Bonjour ! 👋 Je suis l'assistant NovaSolutions. Dites-moi quel est votre secteur d'activité et vos défis actuels, et je vous proposerai la solution IA idéale.", 'bot');
+            addMessage("Bonjour ! 👋 Je suis l'assistant NovaSolutions. Dites-moi votre secteur d'activité ou votre problème actuel, et je vous proposerai la solution IA idéale.", 'bot');
         }
     });
 }
@@ -260,15 +268,25 @@ async function sendToGroq(userMessage) {
             })
         });
 
-        const data = await response.json();
-        const botMessage = data.choices[0].message.content;
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Groq API Error Response:', errorData);
+            throw new Error(errorData.error?.message || 'API request failed');
+        }
 
+        const data = await response.json();
+
+        if (!data.choices || !data.choices[0]) {
+            throw new Error('Invalid API response');
+        }
+
+        const botMessage = data.choices[0].message.content;
         conversationHistory.push({ role: 'assistant', content: botMessage });
         return botMessage;
 
     } catch (error) {
         console.error('Groq API Error:', error);
-        return "Désolé, une erreur s'est produite. Vous pouvez nous contacter directement via le formulaire ci-dessus !";
+        return `Je suis là pour vous aider ! En attendant, voici ce que nous proposons : automatisation des RDV, assistants vocaux, chatbots, et plus encore. Contactez-nous via le formulaire pour un audit gratuit ! 🚀`;
     }
 }
 
