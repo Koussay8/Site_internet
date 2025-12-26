@@ -1,72 +1,82 @@
-# Backend Google Sheets - Guide de Configuration
+# SCRIPT GOOGLE SHEETS (Mise à jour)
 
-## Pourquoi Google Sheets ?
+Pour que le Chatbot puisse enregistrer les RDV et que le formulaire fonctionne toujours, voici le NOUVEAU code à coller dans votre script Google Apps.
 
-C'est la solution **100% gratuite** avec **stockage illimité** pour les formulaires.
+## 1. Copiez ce code
 
----
-
-## Étapes de Configuration
-
-### 1. Créer une Google Sheet
-
-1. Va sur [sheets.google.com](https://sheets.google.com)
-2. Crée une nouvelle feuille
-3. Nomme les colonnes en ligne 1 : **Date | Nom | Email | Message**
-
-### 2. Créer le Script
-
-1. Dans Google Sheets, va dans **Extensions → Apps Script**
-2. Supprime le code existant et colle ceci :
+Allez dans votre Google Sheet > Extensions > Apps Script, effacez tout et collez ceci :
 
 ```javascript
 function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const data = JSON.parse(e.postData.contents);
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetName = 'Feuille 1'; // Assurez-vous que c'est le bon nom
+    const sheet = doc.getSheetByName(sheetName);
+
+    // Récupérer les données
+    const rawData = e.postData.contents;
+    let data;
     
-    sheet.appendRow([
-      new Date(),
-      data.nom,
-      data.email,
-      data.message
-    ]);
-    
-    return ContentService
-      .createTextOutput(JSON.stringify({result: 'success'}))
+    // Essayer de lire en JSON (Chatbot) ou Formulaire classique
+    try {
+      data = JSON.parse(rawData);
+    } catch (err) {
+      // Si ce n'est pas du JSON, c'est probablement le formulaire standard
+      data = {};
+      const params = rawData.split('&');
+      for (let i = 0; i < params.length; i++) {
+        const pair = params[i].split('=');
+        data[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
+    }
+
+    const timestamp = new Date();
+
+    // Cas 1 : Réservation Chatbot
+    if (data.type === 'chatbot_booking') {
+      // Colonnes : Date, Type, Nom/Contact, Email, Sujet, Info Extra
+      sheet.appendRow([
+        timestamp,
+        "BOT_RDV", 
+        data.contact || "Non précisé", 
+        data.date || "Non précisé",
+        data.sujet || "Non précisé",
+        "Réservation via Chatbot"
+      ]);
+    } 
+    // Cas 2 : Formulaire de Contact
+    else {
+      // Colonnes : Date, Type, Nom, Email, Message, Info Extra
+      sheet.appendRow([
+        timestamp,
+        "CONTACT_FORM",
+        data.name || "Inconnu",
+        data.email || "Inconnu",
+        data.message || "",
+        "Source: Site Web"
+      ]);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ "result": "success" }))
       .setMimeType(ContentService.MimeType.JSON);
-  } catch(error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({result: 'error', error: error.message}))
+
+  } catch (e) {
+    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": e }))
       .setMimeType(ContentService.MimeType.JSON);
+
+  } finally {
+    lock.releaseLock();
   }
 }
 ```
 
-1. **Sauvegarde** (Ctrl+S)
+## 2. Important : Redéployer
 
-### 3. Déployer le Script
-
-1. Clique sur **Déployer → Nouveau déploiement**
-2. Type : **Application Web**
-3. Exécuter en tant que : **Moi**
-4. Accès : **Tout le monde**
-5. Clique **Déployer** et **autorise** l'accès
-6. **Copie l'URL** fournie
-
-### 4. Mettre l'URL dans le Site
-
-1. Ouvre `src/main.js`
-2. Trouve la ligne :
-
-   ```javascript
-   const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE';
-   ```
-
-3. Remplace par ton URL copiée
-
----
-
-## ✅ C'est fait
-
-Chaque soumission du formulaire sera automatiquement enregistrée dans ta Google Sheet.
+1. Cliquez sur **Déployer** > **Nouveau déploiement**.
+2. Type : **Application Web**.
+3. Accès : **Tout le monde** (IMPORTANT).
+4. Cliquez sur **Déployer**.
+5. Copiez la **nouvelle URL** (si elle change) et mettez-la à jour dans le fichier `main.js` si nécessaire (mais souvent elle reste la même si vous faites "Gérer les déploiements" > "Modifier" > "Nouvelle version").

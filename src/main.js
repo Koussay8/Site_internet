@@ -140,7 +140,7 @@ if (contactForm) {
         submitBtn.disabled = true;
 
         try {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH_W_qlGXxsuCsqLnDq68WueHQOP4cCYEbz6f8n-nx6snKs0bTZaE6e8nppFSXuUSA/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyI9tuNrrg1ydzC9hUsPyWPh2lA3nbNIONjas7ZkiCm_dm6Ok8VxWrGLidHxFYK9CYscQ/exec';
 
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -183,50 +183,30 @@ const chatbotSend = document.getElementById('chatbot-send');
 
 let conversationHistory = [];
 
-// System prompt - flexible and can handle any question
-const systemPrompt = `Tu es Nova, l'assistant virtuel de l'agence NovaSolutions.
-TA MISSION : Aider les visiteurs à trouver LA solution d'automatisation adaptée.
-TON STYLE : Bref, moderne, et "respirant" (pas de blocs de texte). 
+// System prompt - Orienté prise de RDV avec collecte de coordonnées
+const systemPrompt = `Tu es Nova, assistante IA de NovaSolutions.
+TON BUT : Qualifier le prospect et PRENDRE UN RDV avec ses coordonnées.
 
-RÈGLES D'OR :
-1. Tes réponses doivent être aérées (utilise des sauts de ligne).
-2. Maximum 2 phrases par paragraphe.
-3. Utilise des listes à puces si tu cites plusieurs avantages.
-4. Ton ton est professionnel mais moderne (comme un expert tech accessible).
-5. Ne cite jamais de noms de clients réels.
-6. Ne récite pas la knowledge base, utilise-la pour donner conseil.
+FLUX DE CONVERSATION :
+1. Comprendre le secteur/problème (1-2 questions max)
+2. Proposer un créneau : "On peut en discuter demain à 14h ?"
+3. SI le client accepte → DEMANDE son numéro ou email : "Parfait ! Quel est votre numéro pour vous rappeler ?"
+4. SI le client donne date + contact → Génère : BLOCK_RDV:{"date":"...","contact":"...","sujet":"..."}
 
-STRUCTURE DE RÉPONSE IDÉALE :
-- 1 phrase d'empathie (Ex: "Je comprends, c'est un défi courant...")
-- 1 phrase de solution précise avec une stat (Ex: "Notre agent de qualification règle ça en filtrant...")
-- 1 question d'engagement ou proposition d'appel.
+RÈGLES STRICTES :
+- Réponses de 2 phrases MAX.
+- JAMAIS confirmer un RDV sans avoir le numéro ou l'email.
+- Si le client dit "ok" ou "oui" pour un RDV mais n'a pas donné de contact → DEMANDE-LE.
+- Pas de stats (-70%, etc.) sauf si demandé.
 
-BASE DE CONNAISSANCES :
+EXEMPLES :
+- "Je suis plombier" → "Les artisans perdent souvent des appels sur chantier. On a une solution. Dispo demain 10h pour en parler ?"
+- "Oui demain c'est bon" → "Super ! Quel numéro pour vous joindre ?"
+- "0612345678" → BLOCK_RDV:{"date":"demain 10h","contact":"0612345678","sujet":"plombier"}
+- "Envoyez-moi un mail" → "Bien sûr ! Quelle est votre adresse email ?"
+- "test@email.com" → BLOCK_RDV:{"date":"à définir","contact":"test@email.com","sujet":"prospect"}
 
-A. SECTEUR SANTÉ & BIEN-ÊTRE
-- Dentistes/Orthodontistes : Le problème n°1 est le "No-Show" (RDV non honoré). Solution : Agent de confirmation et rappel qui réduit les no-shows de 70%.
-- Spas/Instituts : Problème de créneaux vides (pertes sèches). Solution : "Yield Management" IA qui envoie des promos flash sms (-20%) sur les créneaux vides (ex: mardi matin).
-- Médecine Esthétique : Les prospects posent 1000 questions (prix, risques, douleur) avant de réserver. Solution : Chatbot éducatif qui rassure et trie les curieux des vrais patients.
-
-B. SECTEUR BÂTIMENT & ARTISANS
-- Solaire/Photovoltaïque : Le coût du lead est énorme (30-60€) et souvent non qualifié. Solution : Calculateur IA qui filtre les demandes (propriétaire ? toiture ?) avant de passer au commercial.
-- Artisans/Couvreurs/Plombiers : Ils sont sur le toit/chantier et ratent les appels. Solution : Assistant Vocal qui répond, rassure, et prend les infos (adresse, urgence) pour ne jamais rater un chantier.
-- Fournisseurs Matériaux : 40 000 références, impossible de tout savoir. Solution : IA connectée au stock qui répond instantanément "Oui j'ai des vis de 12mm en rayon 4".
-
-C. SERVICES JURIDIQUES & IMMO
-- Avocats/Notaires : Passent 20min gratuites au téléphone pour rien. Solution : Chatbot empathique qui collecte les faits (divorce, succession) avant le 1er RDV payant.
-- Agences Immo : 80% des appels locataires sont répétitifs. Solution : Agent qui qualifie les dossiers acheteurs (budget, apport).
-
-D. AUTRES (B2B)
-- Grossistes/Logistique : Commandes vocales "à l'arrache". Solution : IA qui transforme "J'veux 10 sacs de ciment" en bon de commande formatté.
-
-INSTRUCTIONS DE FLUX :
-- Étape 1 : Identifie le secteur ou le problème du visiteur.
-- Étape 2 : Montre que tu as compris sa douleur ("C'est frustrant de perdre des RDV...").
-- Étape 3 : Propose la solution spécifique ("Nous avons un agent qui réduit ça de 70%...").
-- Étape 4 : Propose l'appel stratégique si le client est intéressé.
-
-Réponds TOUJOURS en français.`;
+Réponds en français. Sois bref et direct.`;
 
 // Toggle chatbot
 if (chatbotToggle) {
@@ -234,14 +214,13 @@ if (chatbotToggle) {
         chatbotToggle.classList.toggle('active');
         chatbotContainer.classList.toggle('chatbot-hidden');
 
-        // Send welcome message on first open
         if (!chatbotContainer.classList.contains('chatbot-hidden') && chatbotMessages.children.length === 0) {
-            simulateTyping("Bonjour ! 👋 Je suis Nova. Quel est votre secteur d'activité ou votre défi actuel ?", 'bot');
+            simulateTyping("Bonjour ! Quel est votre secteur d'activité ?", 'bot');
         }
     });
 }
 
-// Add message to chat (Instant for user)
+// Add message instantly (for user messages)
 function addMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}`;
@@ -250,28 +229,36 @@ function addMessage(text, sender) {
     chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
 }
 
-// Simulate typing effect (For bot)
+// Simulate typing effect (for bot - more human, slower)
 function simulateTyping(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}`;
     chatbotMessages.appendChild(messageDiv);
 
     let index = 0;
-    const speed = 15; // ms per char (faster/smoother)
+    const baseSpeed = 25; // Base speed per character (ms)
 
     function typeChar() {
         if (index < text.length) {
             messageDiv.textContent += text.charAt(index);
-            index++;
             chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-            setTimeout(typeChar, speed);
+            index++;
+
+            // Variable speed for natural feel
+            let delay = baseSpeed;
+            const char = text.charAt(index - 1);
+            if (char === '.' || char === '!' || char === '?') delay = 300;
+            else if (char === ',') delay = 150;
+            else if (char === ' ') delay = 40;
+
+            setTimeout(typeChar, delay);
         }
     }
 
     typeChar();
 }
 
-// Show typing indicator
+// Show/hide typing indicator
 function showTyping() {
     const typingDiv = document.createElement('div');
     typingDiv.className = 'chat-message bot typing-indicator';
@@ -286,12 +273,24 @@ function removeTyping() {
     if (typing) typing.remove();
 }
 
+// Google Script URL for bookings
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyI9tuNrrg1ydzC9hUsPyWPh2lA3nbNIONjas7ZkiCm_dm6Ok8VxWrGLidHxFYK9CYscQ/exec';
+
+async function sendBookingToSheet(bookingData) {
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ ...bookingData, type: 'chatbot_booking' }),
+            headers: { 'Content-Type': 'text/plain' }
+        });
+    } catch (e) {
+        console.error("Booking Error", e);
+    }
+}
+
 // Send message to Groq API
 async function sendToGroq(userMessage) {
     conversationHistory.push({ role: 'user', content: userMessage });
-
-    // User message is added instantly via event listener in index.html (or should be)
-    // Note: The click handler isn't shown here but assumes addMessage('user') is called before this.
 
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -306,38 +305,43 @@ async function sendToGroq(userMessage) {
                     { role: 'system', content: systemPrompt },
                     ...conversationHistory
                 ],
-                temperature: 0.7,
-                max_tokens: 300
+                temperature: 0.6,
+                max_tokens: 100
             })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Groq API Error Response:', errorData);
-            throw new Error(errorData.error?.message || 'API request failed');
-        }
+        if (!response.ok) throw new Error('API Error');
 
         const data = await response.json();
+        const botMessage = data.choices?.[0]?.message?.content || "Erreur de réponse.";
 
-        if (!data.choices || !data.choices[0]) {
-            throw new Error('Invalid API response');
+        // DEBUG - voir ce que l'IA répond
+        console.log("🤖 Réponse IA:", botMessage);
+
+        // Check for booking block
+        if (botMessage.includes('BLOCK_RDV:')) {
+            const jsonPart = botMessage.split('BLOCK_RDV:')[1].trim();
+            try {
+                const bookingData = JSON.parse(jsonPart);
+                simulateTyping("C'est noté ! Vous recevrez une confirmation. À très vite !", 'bot');
+                sendBookingToSheet(bookingData);
+                conversationHistory.push({ role: 'assistant', content: "Rendez-vous enregistré." });
+                return;
+            } catch (e) {
+                console.error("JSON Parse Error", e);
+            }
         }
 
-        const botMessage = data.choices[0].message.content;
-
-        // Use simulateTyping instead of addMessage
         simulateTyping(botMessage, 'bot');
-
         conversationHistory.push({ role: 'assistant', content: botMessage });
-        return botMessage;
 
     } catch (error) {
-        console.error('Groq API Error:', error);
-        simulateTyping("Je rencontre une petite erreur technique. N'hésitez pas à nous contacter directement via le formulaire !", 'bot');
+        console.error('API Error:', error);
+        simulateTyping("Petit souci technique. Contactez-nous via le formulaire !", 'bot');
     }
 }
 
-// Handle send
+// Handle send button
 async function handleSend() {
     const message = chatbotInput.value.trim();
     if (!message) return;
@@ -345,11 +349,8 @@ async function handleSend() {
     addMessage(message, 'user');
     chatbotInput.value = '';
 
-    showTyping();
-    const response = await sendToGroq(message);
-    removeTyping();
-
-    addMessage(response, 'bot');
+    // Pas de showTyping ici car simulateTyping gère l'affichage progressif
+    await sendToGroq(message);
 }
 
 if (chatbotSend) {
@@ -363,3 +364,4 @@ if (chatbotInput) {
 }
 
 console.log('Site ready with AI chatbot! 🚀');
+
