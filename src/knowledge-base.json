@@ -1,184 +1,124 @@
 {
-    "entreprise": {
+    "agence": {
         "nom": "NovaSolutions",
-        "specialite": "Automatisation IA pour entreprises",
-        "annee_creation": 2024,
-        "clients_aides": 47,
-        "heures_economisees": 12500,
-        "taux_satisfaction": 98
+        "mission": "Automatisation IA pour TPE/PME",
+        "approche": "On installe des assistants IA qui travaillent 24/7 pour vous libérer du temps et ne plus perdre de clients"
     },
-    "statistiques_globales": {
-        "reduction_no_shows": "75%",
-        "gain_temps_moyen": "20h/semaine",
-        "roi_moyen": "300%",
-        "delai_mise_en_place": "2-4 semaines"
-    },
-    "produits": [
-        {
-            "id": 1,
-            "nom": "L'Agent de Qualification & Prise de RDV (24/7)",
-            "description": "Agent IA qui qualifie les prospects et prend des rendez-vous automatiquement, 24h/24 et 7j/7.",
-            "domaines": [
-                "Santé (dentistes, esthétique)",
-                "Immobilier",
-                "Services (coiffeurs, garages)"
+    "secteurs": {
+        "sante_esthetique": {
+            "nom": "Esthéticiens & Médecine Esthétique",
+            "problemes": [
+                "Les gens n'osent pas appeler directement",
+                "Les messages Instagram restent sans réponse immédiate",
+                "Les questions sur les prix et les risques font hésiter les prospects"
             ],
-            "avantages": [
-                "Réduit drastiquement les 'No-shows'",
-                "Libère le secrétariat en filtrant les demandes sérieuses",
-                "Envoie vers Doctolib ou Calendly automatiquement"
-            ],
-            "resultat_client": "Cabinet dentaire à Lyon : -70% de no-shows en 2 mois",
-            "prix_indicatif": "À partir de 497€/mois",
-            "ideal_pour": "Entreprises avec beaucoup de prises de RDV qui perdent du temps avec des prospects non qualifiés"
+            "solution": "Un assistant IA qui répond à 90% des questions 24/7, pré-qualifie les prospects, et simplifie le parcours vers la prise de rendez-vous (Doctolib ou téléphone)",
+            "argument_cle": "Si on vous apporte ne serait-ce que 3 à 5 nouveaux patients par mois, ça couvre largement le coût de notre service"
         },
-        {
-            "id": 2,
-            "nom": "L'Assistant Vocal 'Mains Libres' pour Artisans",
-            "description": "Service vocal IA qui répond au téléphone quand l'artisan est occupé sur un chantier.",
-            "domaines": [
-                "Artisans du bâtiment",
-                "Couvreurs",
-                "Électriciens",
-                "Plombiers"
+        "dentistes_orthodontistes": {
+            "nom": "Dentistes & Orthodontistes",
+            "problemes": [
+                "Le No-Show : les rendez-vous non honorés représentent une perte sèche",
+                "Le standard téléphonique est saturé, les secrétaires débordées"
             ],
-            "avantages": [
-                "Rassure le client immédiatement",
-                "Prend les coordonnées",
-                "Envoie un SMS de confirmation",
-                "Ne rate plus jamais un appel"
-            ],
-            "resultat_client": "Un seul chantier sauvé par an rentabilise l'outil",
-            "prix_indicatif": "À partir de 197€/mois",
-            "ideal_pour": "Artisans souvent sur les toits ou en chantier qui ratent des appels importants"
+            "solution": "Un agent de confirmation et rappel automatique qui réduit drastiquement les absences, plus un chatbot qui répond aux questions fréquentes des patients",
+            "argument_cle": "Chaque No-Show évité, c'est un créneau qui rapporte au lieu de coûter"
         },
-        {
-            "id": 3,
-            "nom": "Le Calculateur d'Éligibilité & Devis IA",
-            "description": "Calculateur intelligent qui pré-qualifie les clients et génère des devis automatiquement.",
-            "domaines": [
-                "Secteur Solaire (Photovoltaïque)",
-                "Rénovation Énergétique (MaPrimeRénov')"
+        "spas_bien_etre": {
+            "nom": "Spas & Instituts de Bien-Être",
+            "problemes": [
+                "Les créneaux vides sont des pertes sèches",
+                "Difficile de remplir les horaires creux (mardi matin, etc.)"
             ],
-            "avantages": [
-                "Pré-qualifie le client (exposition toit, revenus)",
-                "Ne transmet aux commerciaux que les dossiers finançables",
-                "Réduit le coût d'acquisition de 60%"
-            ],
-            "resultat_client": "Installateur solaire : coût par lead passé de 45€ à 18€",
-            "prix_indicatif": "À partir de 397€/mois",
-            "ideal_pour": "Entreprises où le coût du lead est très élevé (30-60€) et beaucoup de prospects non qualifiés"
+            "solution": "Un système de Yield Management IA qui envoie des promos flash SMS sur les créneaux vides pour les remplir en dernière minute",
+            "argument_cle": "Un créneau vide à -20% rapporte toujours plus qu'un créneau vide à 100%"
         },
-        {
-            "id": 4,
-            "nom": "L'Agent WhatsApp de Commande B2B",
-            "description": "IA qui interprète les messages vocaux ou texte des clients pros pour passer des commandes automatiquement.",
-            "domaines": [
-                "Grossistes (MIN de Lomme)",
-                "Fournisseurs de matériaux",
-                "Logistique"
+        "artisans_batiment": {
+            "nom": "Artisans & Bâtiment",
+            "problemes": [
+                "Les artisans perdent des appels quand ils sont sur chantier",
+                "Les demandes de devis arrivent en masse mais peu sont qualifiées",
+                "Les clients ne savent pas s'ils ont droit aux aides (MaPrimeRénov, etc.)"
             ],
-            "avantages": [
-                "Remplace la prise de commande chaotique par téléphone/mail",
-                "Comprend les messages comme 'Il me faut 10 sacs de ciment'",
-                "Vérifie le stock en temps réel",
-                "Génère le bon de commande automatiquement"
-            ],
-            "resultat_client": "Grossiste alimentaire : 3h de saisie manuelle économisées par jour",
-            "prix_indicatif": "À partir de 597€/mois",
-            "ideal_pour": "Entreprises B2B qui reçoivent des commandes par téléphone ou messages vocaux"
+            "solution": "Un répondeur IA vocal qui décroche, qualifie le client sur la zone d'intervention, et envoie un SMS de confirmation de prise en compte",
+            "argument_cle": "Ne ratez plus aucun chantier parce que vous étiez sur une échelle"
         },
-        {
-            "id": 5,
-            "nom": "L'Assistant Immo / Locataire IA",
-            "description": "Agent IA qui traite les questions récurrentes des locataires et qualifie les dossiers d'acheteurs.",
-            "domaines": [
-                "Agences immobilières",
-                "Syndics",
-                "Gestionnaires de biens"
+        "solaire_photovoltaique": {
+            "nom": "Solaire & Photovoltaïque",
+            "problemes": [
+                "Le secteur reçoit énormément de demandes mais la plupart ne sont pas qualifiées",
+                "Les entreprises paient 30 à 60€ le lead, c'est extrêmement cher",
+                "Besoin de filtrer, pré-qualifier, optimiser, réduire le coût d'acquisition"
             ],
-            "avantages": [
-                "Répond aux questions récurrentes ('comment purger mon radiateur ?')",
-                "Qualifie les dossiers des candidats acheteurs (budget, apport, garant)",
-                "Libère du temps avant la première visite humaine"
-            ],
-            "resultat_client": "Agence immobilière Paris : 40% de temps gagné sur la qualification",
-            "prix_indicatif": "À partir de 347€/mois",
-            "ideal_pour": "Agences et syndics submergés par les questions répétitives des locataires"
+            "solution": "Un agent IA + calculateur solaire qui pré-qualifie les leads avant qu'ils arrivent chez vous",
+            "argument_cle": "On vous livre uniquement des leads qualifiés, pas des curieux"
         },
-        {
-            "id": 6,
-            "nom": "Le Générateur de Contenu & SEO Local IA",
-            "description": "IA qui rédige des articles de blog optimisés pour le SEO local sans intervention humaine.",
-            "domaines": [
-                "Professions libérales (Avocats, Notaires)",
-                "Instituts de soin"
+        "fournisseurs_materiaux": {
+            "nom": "Fournisseurs & Grossistes Matériaux",
+            "problemes": [
+                "Les artisans clients sont souvent pressés et en retard numériquement",
+                "40 000 références en stock, impossible pour un humain de tout retenir",
+                "Les questions du type 'Tu as des vis de 12mm en stock?' prennent du temps au comptoir"
             ],
-            "avantages": [
-                "Idéal pour les sites 'vieillissants'",
-                "Rédige des articles sur des cas précis (ex: 'L'Hydrafacial en hiver')",
-                "Attire du trafic local qualifié",
-                "Le client n'écrit aucune ligne"
-            ],
-            "resultat_client": "Institut de beauté Lille : +180% de trafic organique en 4 mois",
-            "prix_indicatif": "À partir de 297€/mois",
-            "ideal_pour": "Professions libérales et commerces locaux avec un site web peu actif"
+            "solution": "Un agent conversationnel connecté au stock qui répond instantanément aux questions produits",
+            "argument_cle": "Vos clients gagnent du temps, vous gagnez en efficacité"
         },
-        {
-            "id": 7,
-            "nom": "Le Module de Simulation Immersive IA",
-            "description": "Outil de vente puissant qui permet au client de visualiser son futur projet à partir d'une simple photo.",
-            "domaines": [
-                "Paysagistes",
-                "Piscinistes",
-                "Architectes d'intérieur"
+        "avocats_notaires": {
+            "nom": "Avocats & Notaires",
+            "problemes": [
+                "Passer 20 minutes à prendre les coordonnées d'un client au téléphone est une perte financière",
+                "Le divorce est émotionnellement lourd, les clients ont besoin d'empathie",
+                "Les sites web sont souvent vieillissants ou inexistants"
             ],
-            "avantages": [
-                "Visualise le futur jardin ou piscine à partir d'une photo du terrain",
-                "Déclenche l'achat émotionnel",
-                "Différencie de la concurrence"
-            ],
-            "resultat_client": "Pisciniste Bordeaux : taux de conversion devis +35%",
-            "prix_indicatif": "À partir de 697€/mois",
-            "ideal_pour": "Entreprises de services visuels où le client a du mal à se projeter"
+            "solution": "Un chatbot empathique qui collecte les informations préliminaires sans intervention humaine, et estime les besoins juridiques",
+            "argument_cle": "Vos collaborateurs se concentrent sur le fond, pas sur la prise de coordonnées"
         },
-        {
-            "id": 8,
-            "nom": "Le Prospecteur Automatisé B2B (Cold Outreach)",
-            "description": "Système de scraping et IA pour envoyer des messages ultra-personnalisés aux décideurs.",
-            "domaines": [
-                "Nettoyage Industriel",
-                "Entreprises de Travaux Publics"
+        "nettoyage_industriel": {
+            "nom": "Nettoyage Industriel",
+            "problemes": [
+                "Besoin constant de nouveaux contrats B2B",
+                "Prospection chronophage"
             ],
-            "avantages": [
-                "Cible les décideurs (syndics, mairies)",
-                "Messages personnalisés automatiquement",
-                "Indispensable pour les contrats récurrents à gros volume"
+            "solution": "Service de génération de leads (scraping + email froid) ciblant les gestionnaires d'immeubles et les établissements privés",
+            "argument_cle": "On vous trouve les contacts, vous signez les contrats"
+        },
+        "immobilier": {
+            "nom": "Immobilier & Habitat",
+            "problemes": [
+                "Les mandataires ont besoin de se démarquer sur internet",
+                "Les appels incessants des locataires pour des petits problèmes",
+                "Les architectes d'intérieur ont besoin de visuels de qualité"
             ],
-            "resultat_client": "Entreprise de nettoyage : 12 nouveaux contrats en 3 mois",
-            "prix_indicatif": "À partir de 797€/mois",
-            "ideal_pour": "Entreprises B2B qui cherchent des contrats récurrents avec de gros clients"
+            "solution": "Sites personnels de marque pour mandataires, assistants locataires IA, et outils de génération d'images par IA pour les architectes",
+            "argument_cle": "Se différencier sans y passer des heures"
+        },
+        "logistique_grossiste": {
+            "nom": "Logistique & Grossistes Alimentaires",
+            "problemes": [
+                "Les commandes arrivent de partout : WhatsApp, email, téléphone",
+                "50% du temps administratif perdu, 80% d'erreurs de commande possibles"
+            ],
+            "solution": "Un numéro WhatsApp Business + agent IA + export email unifié",
+            "argument_cle": "Simplifiez 100% des commandes nocturnes et recommandations automatiques"
+        },
+        "ecoles_privees": {
+            "nom": "Écoles Privées & Formation",
+            "problemes": [
+                "Les parents 'magasinent' entre les écoles, beaucoup de questions",
+                "Le taux de réussite est un argument marketing, mais pas toujours bien mis en avant"
+            ],
+            "solution": "Un chatbot pédagogique qui rassure sur les questions des parents + widget de taux de réussite sur le site",
+            "argument_cle": "Répondre aux parents 24/7 augmente les inscriptions"
+        },
+        "evenementiel_traiteurs": {
+            "nom": "Événementiel & Traiteurs",
+            "problemes": [
+                "Rebond post-Covid avec énormément de demandes",
+                "Trésorerie serrée donc pas de recrutement possible",
+                "Chaque devis raté = 1000 à 20000€ perdus"
+            ],
+            "solution": "Automatisation des réponses rapides, captation de leads, visites virtuelles et menus interactifs",
+            "argument_cle": "Ne laissez plus filer un mariage parce que vous n'avez pas répondu à temps"
         }
-    ],
-    "temoignages": [
-        {
-            "client": "Dr. Martin",
-            "entreprise": "Cabinet Dentaire Lyon",
-            "produit": "Agent de Qualification",
-            "temoignage": "Nos no-shows ont chuté de 70%. L'IA filtre parfaitement les vrais patients."
-        },
-        {
-            "client": "Jean-Pierre R.",
-            "entreprise": "Plombier Indépendant",
-            "produit": "Assistant Vocal Mains Libres",
-            "temoignage": "Je ne rate plus un seul appel même quand je suis sous une baignoire."
-        },
-        {
-            "client": "Sophie L.",
-            "entreprise": "Agence Immobilière Paris",
-            "produit": "Assistant Immo IA",
-            "temoignage": "40% de temps gagné. Mes agents se concentrent sur les visites, pas les questions basiques."
-        }
-    ],
-    "instructions_chatbot": "Tu es l'assistant commercial de NovaSolutions. Tu dois aider les visiteurs à trouver le produit IA qui correspond à leur besoin. Pose des questions sur leur secteur d'activité, leurs problèmes actuels, et recommande le produit adapté avec des statistiques réelles de nos clients. Sois professionnel mais chaleureux."
+    }
 }

@@ -140,7 +140,7 @@ if (contactForm) {
         submitBtn.disabled = true;
 
         try {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyI9tuNrrg1ydzC9hUsPyWPh2lA3nbNIONjas7ZkiCm_dm6Ok8VxWrGLidHxFYK9CYscQ/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWdZwgNeU1-WjFcvUlD7UCR4WtSD_tAhGGxPg7oKMnq-y8kmmOGwhUahxGapdRwfcD_Q/exec';
 
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -183,30 +183,37 @@ const chatbotSend = document.getElementById('chatbot-send');
 
 let conversationHistory = [];
 
-// System prompt - Orienté prise de RDV avec collecte de coordonnées
-const systemPrompt = `Tu es Nova, assistante IA de NovaSolutions.
-TON BUT : Qualifier le prospect et PRENDRE UN RDV avec ses coordonnées.
+// System prompt - Conseiller puis proposer RDV
+const systemPrompt = `Tu es Nova, conseillère IA de NovaSolutions, agence d'automatisation.
+
+TON RÔLE : Comprendre le problème du visiteur, lui expliquer comment on peut l'aider, puis collecter les infos pour un RDV.
 
 FLUX DE CONVERSATION :
-1. Comprendre le secteur/problème (1-2 questions max)
-2. Proposer un créneau : "On peut en discuter demain à 14h ?"
-3. SI le client accepte → DEMANDE son numéro ou email : "Parfait ! Quel est votre numéro pour vous rappeler ?"
-4. SI le client donne date + contact → Génère : BLOCK_RDV:{"date":"...","contact":"...","sujet":"..."}
+1. ÉCOUTER : Comprendre son secteur et son problème
+2. RÉPONDRE : Expliquer en 2-3 phrases comment on résout son problème
+3. PROPOSER : "Quand seriez-vous disponible pour un échange avec l'un de nos spécialistes ?"
+4. COLLECTER : Demande les 3 infos (peut être en plusieurs messages) :
+   - Date/heure de disponibilité
+   - Numéro ou email
+   - Nom ou nom d'entreprise
+5. CONFIRMER : SEULEMENT si tu as les TROIS → BLOCK_RDV:{"date":"...","contact":"...","nom":"...","sujet":"..."}
 
-RÈGLES STRICTES :
-- Réponses de 2 phrases MAX.
-- JAMAIS confirmer un RDV sans avoir le numéro ou l'email.
-- Si le client dit "ok" ou "oui" pour un RDV mais n'a pas donné de contact → DEMANDE-LE.
-- Pas de stats (-70%, etc.) sauf si demandé.
+ARGUMENTS PAR SECTEUR :
+• ESTHÉTICIENS : Messages Instagram sans réponse → assistant IA 24/7, pré-qualification, prise de RDV automatique.
+• DENTISTES : No-Show, standard saturé → agent de confirmation automatique, chatbot FAQ.
+• SPAS : Créneaux vides → promos flash automatiques pour remplir les horaires creux.
+• ARTISANS : Appels ratés sur chantier → répondeur IA qui qualifie et envoie SMS.
+• SOLAIRE : Leads non qualifiés chers → agent IA + calculateur pour pré-qualifier.
+• AVOCATS : 20 min au téléphone pour infos basiques → chatbot collecte infos préliminaires.
+• ÉVÉNEMENTIEL : Trop de demandes → automatisation pour ne plus laisser filer de contrat.
 
-EXEMPLES :
-- "Je suis plombier" → "Les artisans perdent souvent des appels sur chantier. On a une solution. Dispo demain 10h pour en parler ?"
-- "Oui demain c'est bon" → "Super ! Quel numéro pour vous joindre ?"
-- "0612345678" → BLOCK_RDV:{"date":"demain 10h","contact":"0612345678","sujet":"plombier"}
-- "Envoyez-moi un mail" → "Bien sûr ! Quelle est votre adresse email ?"
-- "test@email.com" → BLOCK_RDV:{"date":"à définir","contact":"test@email.com","sujet":"prospect"}
+RÈGLES CRITIQUES :
+- Réponds en 2-3 phrases MAX
+- Si manque une info (date, contact OU nom) → demande-la poliment
+- Exemple si manque contact+nom : "Parfait ! Pour confirmer, quel est votre nom et votre numéro/email ?"
+- NE GÉNÈRE JAMAIS BLOCK_RDV sans avoir les 3 infos (date + contact + nom)
 
-Réponds en français. Sois bref et direct.`;
+Réponds en français, de manière professionnelle.`;
 
 // Toggle chatbot
 if (chatbotToggle) {
@@ -306,7 +313,7 @@ async function sendToGroq(userMessage) {
                     ...conversationHistory
                 ],
                 temperature: 0.6,
-                max_tokens: 100
+                max_tokens: 200
             })
         });
 
@@ -318,12 +325,18 @@ async function sendToGroq(userMessage) {
         // DEBUG - voir ce que l'IA répond
         console.log("🤖 Réponse IA:", botMessage);
 
-        // Check for booking block
-        if (botMessage.includes('BLOCK_RDV:')) {
-            const jsonPart = botMessage.split('BLOCK_RDV:')[1].trim();
+        // Check for booking block (handles various formats: BLOCK_RDV:, **BLOCK_RDV**, etc.)
+        const blockPattern = /\*{0,2}BLOCK_RDV\*{0,2}\s*:?\s*(\{[\s\S]*?\})/i;
+        const blockMatch = botMessage.match(blockPattern);
+
+        if (blockMatch) {
             try {
-                const bookingData = JSON.parse(jsonPart);
-                simulateTyping("C'est noté ! Vous recevrez une confirmation. À très vite !", 'bot');
+                const bookingData = JSON.parse(blockMatch[1]);
+                const hasEmail = bookingData.contact && bookingData.contact.includes('@');
+                const confirmMsg = hasEmail
+                    ? "Parfait ! 📧 Vous recevrez un email de confirmation avec l'invitation calendar. À très bientôt !"
+                    : "C'est noté ! Un membre de notre équipe vous contactera. À très bientôt !";
+                simulateTyping(confirmMsg, 'bot');
                 sendBookingToSheet(bookingData);
                 conversationHistory.push({ role: 'assistant', content: "Rendez-vous enregistré." });
                 return;
@@ -332,7 +345,16 @@ async function sendToGroq(userMessage) {
             }
         }
 
-        simulateTyping(botMessage, 'bot');
+        // Clean any remaining BLOCK_RDV references from the displayed message
+        let cleanMessage = botMessage.replace(/\*{0,2}BLOCK_RDV\*{0,2}\s*:?\s*\{[\s\S]*?\}/gi, '').trim();
+        // Also remove partial blocks or mentions
+        cleanMessage = cleanMessage.replace(/\*{0,2}BLOCK_RDV\*{0,2}[^.!?]*/gi, '').trim();
+
+        if (cleanMessage) {
+            simulateTyping(cleanMessage, 'bot');
+        } else {
+            simulateTyping("C'est noté ! Vous recevrez une confirmation. À très vite !", 'bot');
+        }
         conversationHistory.push({ role: 'assistant', content: botMessage });
 
     } catch (error) {
