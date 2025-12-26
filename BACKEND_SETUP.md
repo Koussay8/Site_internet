@@ -1,37 +1,21 @@
-# SCRIPT GOOGLE APPS - Email Confirmation + Calendar
+# SCRIPT GOOGLE APPS - Version Finale
 
-Ce script gère les réservations du chatbot et du formulaire de contact, avec:
-
-- ✅ Enregistrement dans Google Sheets
-- ✅ Création d'événement Google Calendar avec Meet
-- ✅ Envoi d'email de confirmation
-
-## 1. Copiez ce code dans Google Apps Script
-
-Allez dans votre Google Sheet > Extensions > Apps Script, effacez tout et collez ceci :
+Copiez ce code dans Google Apps Script (Extensions > Apps Script) :
 
 ```javascript
 /**
  * NovaSolutions - Backend Script
- * Gère les RDV Chatbot et le Formulaire de Contact
- * Avec confirmation Email + Invitation Google Calendar
+ * Calendar + Email Premium
  */
 
-// ============================================
-// CONFIGURATION - MODIFIEZ CES VALEURS
-// ============================================
 const CONFIG = {
-  SHEET_NAME: 'Feuille 1',           // Nom de votre feuille
-  CALENDAR_ID: 'primary',            // 'primary' pour votre calendrier principal
+  SHEET_NAME: 'Feuille 1',
+  CALENDAR_ID: 'primary',
   COMPANY_NAME: 'NovaSolutions',
-  COMPANY_EMAIL: 'contact@novasolutions.io',
   MEETING_DURATION_MINUTES: 30,
   TIMEZONE: 'Europe/Paris'
 };
 
-// ============================================
-// POINT D'ENTRÉE - doPost
-// ============================================
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.tryLock(10000);
@@ -40,108 +24,46 @@ function doPost(e) {
     const doc = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = doc.getSheetByName(CONFIG.SHEET_NAME);
     
-    // Parser les données
     const rawData = e.postData.contents;
-    let data = parseData(rawData);
+    let data;
+    try {
+      data = JSON.parse(rawData);
+    } catch (err) {
+      data = {};
+      const params = rawData.split('&');
+      for (let i = 0; i < params.length; i++) {
+        const pair = params[i].split('=');
+        data[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
+    }
     
     const timestamp = new Date();
-    let result = { success: false, message: '' };
 
-    // ============================================
-    // CAS 1: RÉSERVATION CHATBOT
-    // ============================================
     if (data.type === 'chatbot_booking') {
-      const rdvDate = parseRdvDate(data.date);
       const hasEmail = isValidEmail(data.contact);
+      const rdvDate = parseRdvDate(data.date);
       
-      // Enregistrer dans la Sheet
-      sheet.appendRow([
-        timestamp,
-        "BOT_RDV",
-        data.nom || "Non précisé",
-        data.contact || "Non précisé",
-        data.date || "Non précisé",
-        data.sujet || "Non précisé",
-        "Chatbot",
-        hasEmail ? "Email envoyé" : "Téléphone - Pas d'email"
-      ]);
+      sheet.appendRow([timestamp, "BOT_RDV", data.nom || "", data.contact || "", data.date || "", data.sujet || "", "Chatbot"]);
       
-      // Si email valide → Créer Calendar + Envoyer Email
       if (hasEmail && rdvDate) {
-        const calendarResult = createCalendarEvent(data, rdvDate);
-        sendConfirmationEmail(data, rdvDate, calendarResult.meetLink, 'chatbot');
-        result = { success: true, message: 'RDV créé + Email envoyé', meetLink: calendarResult.meetLink };
+        createCalendarEvent(data, rdvDate);
+        sendConfirmationEmail(data, rdvDate, 'chatbot');
       } else if (hasEmail) {
-        // Email mais date non parsable → Email simple
-        sendConfirmationEmail(data, null, null, 'chatbot');
-        result = { success: true, message: 'Email envoyé (date à confirmer)' };
-      } else {
-        result = { success: true, message: 'Enregistré (téléphone uniquement)' };
+        sendConfirmationEmail(data, null, 'chatbot');
       }
-    }
-    // ============================================
-    // CAS 2: FORMULAIRE DE CONTACT
-    // ============================================
-    else {
-      const hasEmail = isValidEmail(data.email);
+    } else {
+      sheet.appendRow([timestamp, "CONTACT_FORM", data.name || "", data.email || "", "", data.message || "", "Formulaire"]);
       
-      // Enregistrer dans la Sheet
-      sheet.appendRow([
-        timestamp,
-        "CONTACT_FORM",
-        data.name || "Inconnu",
-        data.email || "Inconnu",
-        "À planifier",
-        data.message || "",
-        "Formulaire Web",
-        hasEmail ? "Email envoyé" : "Pas d'email"
-      ]);
-      
-      // Si email → Envoyer confirmation
-      if (hasEmail) {
-        const contactData = {
-          nom: data.name,
-          contact: data.email,
-          sujet: data.message ? data.message.substring(0, 100) : 'Demande de contact'
-        };
-        sendConfirmationEmail(contactData, null, null, 'contact');
-        result = { success: true, message: 'Formulaire reçu + Email envoyé' };
-      } else {
-        result = { success: true, message: 'Formulaire enregistré' };
+      if (isValidEmail(data.email)) {
+        sendConfirmationEmail({nom: data.name, contact: data.email, sujet: data.message}, null, 'contact');
       }
     }
 
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-
+    return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    console.error('Erreur doPost:', error);
-    return ContentService.createTextOutput(JSON.stringify({ 
-      success: false, 
-      error: error.toString() 
-    })).setMimeType(ContentService.MimeType.JSON);
-
+    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
-  }
-}
-
-// ============================================
-// FONCTIONS UTILITAIRES
-// ============================================
-
-function parseData(rawData) {
-  try {
-    return JSON.parse(rawData);
-  } catch (err) {
-    // Fallback pour form-urlencoded
-    const data = {};
-    const params = rawData.split('&');
-    for (let i = 0; i < params.length; i++) {
-      const pair = params[i].split('=');
-      data[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-    }
-    return data;
   }
 }
 
@@ -152,26 +74,15 @@ function isValidEmail(str) {
 
 function parseRdvDate(dateStr) {
   if (!dateStr) return null;
-  
   const now = new Date();
   const str = dateStr.toLowerCase();
+  const jours = {'lundi':1,'mardi':2,'mercredi':3,'jeudi':4,'vendredi':5,'samedi':6,'dimanche':0};
   
-  // Mapping des jours
-  const jours = {
-    'lundi': 1, 'mardi': 2, 'mercredi': 3, 'jeudi': 4,
-    'vendredi': 5, 'samedi': 6, 'dimanche': 0
-  };
-  
-  // Trouver le jour
   let targetDay = null;
   for (const [nom, num] of Object.entries(jours)) {
-    if (str.includes(nom)) {
-      targetDay = num;
-      break;
-    }
+    if (str.includes(nom)) { targetDay = num; break; }
   }
   
-  // Trouver l'heure
   const heureMatch = str.match(/(\d{1,2})\s*[h:]\s*(\d{0,2})?/);
   let heure = 10, minutes = 0;
   if (heureMatch) {
@@ -179,12 +90,9 @@ function parseRdvDate(dateStr) {
     minutes = heureMatch[2] ? parseInt(heureMatch[2]) : 0;
   }
   
-  // Calculer la date
   let rdvDate = new Date(now);
-  
   if (targetDay !== null) {
-    const currentDay = now.getDay();
-    let daysUntil = targetDay - currentDay;
+    let daysUntil = targetDay - now.getDay();
     if (daysUntil <= 0) daysUntil += 7;
     rdvDate.setDate(now.getDate() + daysUntil);
   } else if (str.includes('demain')) {
@@ -194,205 +102,39 @@ function parseRdvDate(dateStr) {
   }
   
   rdvDate.setHours(heure, minutes, 0, 0);
-  
   return rdvDate;
 }
 
-// ============================================
-// CRÉATION ÉVÉNEMENT CALENDAR AVEC MEET
-// ============================================
 function createCalendarEvent(data, rdvDate) {
   try {
-    const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID) || CalendarApp.getDefaultCalendar();
-    
+    const calendar = CalendarApp.getDefaultCalendar();
     const endTime = new Date(rdvDate.getTime() + CONFIG.MEETING_DURATION_MINUTES * 60000);
-    
-    const title = `🗓️ RDV - ${data.nom || 'Prospect'}`;
-    const description = `
-📋 Réservation via ${CONFIG.COMPANY_NAME}
-
-👤 Nom: ${data.nom || 'Non précisé'}
-📧 Contact: ${data.contact || 'Non précisé'}
-📝 Sujet: ${data.sujet || 'Non précisé'}
-
----
-Réservation automatique via le chatbot.
-    `.trim();
-    
-    // Créer l'événement avec invité (pour générer Meet)
-    const event = calendar.createEvent(title, rdvDate, endTime, {
-      description: description,
+    calendar.createEvent('🗓️ RDV - ' + (data.nom || 'Prospect'), rdvDate, endTime, {
+      description: '👤 Contact: ' + data.contact + '\n📝 Sujet: ' + data.sujet,
       guests: data.contact,
       sendInvites: true
     });
-    
-    // Ajouter Google Meet
-    let meetLink = 'Appel téléphonique';
-    try {
-      // Essayer d'obtenir le lien Meet via l'API avancée
-      const calendarEvent = Calendar.Events.get(CONFIG.CALENDAR_ID === 'primary' ? 'primary' : CONFIG.CALENDAR_ID, event.getId().split('@')[0]);
-      
-      if (!calendarEvent.conferenceData) {
-        // Créer une conférence Meet
-        const conferenceRequest = {
-          conferenceData: {
-            createRequest: {
-              requestId: Utilities.getUuid(),
-              conferenceSolutionKey: { type: 'hangoutsMeet' }
-            }
-          }
-        };
-        
-        const updatedEvent = Calendar.Events.patch(conferenceRequest, 
-          CONFIG.CALENDAR_ID === 'primary' ? 'primary' : CONFIG.CALENDAR_ID, 
-          event.getId().split('@')[0],
-          { conferenceDataVersion: 1 }
-        );
-        
-        if (updatedEvent.conferenceData && updatedEvent.conferenceData.entryPoints) {
-          meetLink = updatedEvent.conferenceData.entryPoints.find(e => e.entryPointType === 'video')?.uri || meetLink;
-        }
-      } else if (calendarEvent.conferenceData.entryPoints) {
-        meetLink = calendarEvent.conferenceData.entryPoints.find(e => e.entryPointType === 'video')?.uri || meetLink;
-      }
-    } catch (meetError) {
-      console.log('Meet link non disponible, utilisation appel téléphonique');
-    }
-    
-    return { eventId: event.getId(), meetLink: meetLink };
-    
-  } catch (error) {
-    console.error('Erreur création calendrier:', error);
-    return { eventId: null, meetLink: 'Appel téléphonique' };
-  }
+  } catch (e) {}
 }
 
-// ============================================
-// ENVOI EMAIL DE CONFIRMATION
-// ============================================
-function sendConfirmationEmail(data, rdvDate, meetLink, source) {
+function sendConfirmationEmail(data, rdvDate, source) {
   try {
-    const recipientEmail = data.contact;
-    if (!isValidEmail(recipientEmail)) return;
+    const email = data.contact;
+    if (!isValidEmail(email)) return;
     
-    const nomClient = data.nom || 'Cher(e) client(e)';
-    const dateFormatted = rdvDate 
-      ? Utilities.formatDate(rdvDate, CONFIG.TIMEZONE, "EEEE d MMMM yyyy 'à' HH'h'mm")
-      : 'Date à confirmer';
+    const nom = data.nom || 'Cher client';
+    const dateStr = rdvDate ? Utilities.formatDate(rdvDate, CONFIG.TIMEZONE, "EEEE d MMMM yyyy 'à' HH'h'mm") : 'À confirmer';
+    const sujet = source === 'chatbot' ? '✅ Votre RDV est confirmé - ' + CONFIG.COMPANY_NAME : '📬 Message reçu - ' + CONFIG.COMPANY_NAME;
     
-    const sujet = source === 'chatbot' 
-      ? `✅ Confirmation de votre RDV - ${CONFIG.COMPANY_NAME}`
-      : `📬 Nous avons reçu votre message - ${CONFIG.COMPANY_NAME}`;
+    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#0a0a0f;font-family:Segoe UI,Roboto,Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0f;padding:40px 20px;"><tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);border-radius:24px;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);"><tr><td style="background:linear-gradient(135deg,#a855f7 0%,#6366f1 50%,#3b82f6 100%);padding:40px;text-align:center;"><h1 style="margin:0;font-size:32px;font-weight:800;color:#fff;">✨ ' + CONFIG.COMPANY_NAME + '</h1><p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Agence d\'Automatisation IA</p></td></tr><tr><td style="padding:40px;"><h2 style="margin:0 0 20px;font-size:24px;color:#fff;">Bonjour ' + nom + ' 👋</h2>' + (source === 'chatbot' ? '<p style="margin:0 0 25px;color:rgba(255,255,255,0.85);font-size:16px;line-height:1.7;">Excellente nouvelle ! Votre rendez-vous est <strong style="color:#a855f7;">confirmé</strong>.</p><table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,rgba(168,85,247,0.15) 0%,rgba(59,130,246,0.15) 100%);border-radius:16px;border-left:4px solid #a855f7;margin:25px 0;"><tr><td style="padding:25px;"><p style="margin:0 0 10px;color:rgba(255,255,255,0.6);font-size:14px;">📅 Date</p><p style="margin:0 0 15px;color:#fff;font-size:16px;font-weight:600;">' + dateStr + '</p><p style="margin:0 0 10px;color:rgba(255,255,255,0.6);font-size:14px;">📝 Sujet</p><p style="margin:0;color:#fff;font-size:16px;font-weight:600;">' + (data.sujet || 'Automatisation IA') + '</p></td></tr></table><p style="margin:25px 0;color:rgba(255,255,255,0.85);font-size:15px;">📩 Une invitation Calendar vous a été envoyée.</p>' : '<p style="margin:0 0 25px;color:rgba(255,255,255,0.85);font-size:16px;line-height:1.7;">Nous avons bien reçu votre message.</p><table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.05);border-radius:16px;border-left:4px solid #3b82f6;margin:25px 0;"><tr><td style="padding:25px;"><p style="margin:0 0 10px;color:rgba(255,255,255,0.6);font-size:14px;">💬 Votre message</p><p style="margin:0;color:#fff;font-size:15px;font-style:italic;">"' + (data.sujet || 'Demande de contact') + '"</p></td></tr></table><p style="margin:25px 0;color:rgba(255,255,255,0.85);font-size:15px;">Notre équipe vous répondra rapidement.</p>') + '<p style="margin:30px 0 0;padding-top:25px;border-top:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);font-size:15px;">À très bientôt,<br><strong style="color:#a855f7;">L\'équipe ' + CONFIG.COMPANY_NAME + '</strong></p></td></tr><tr><td style="background:rgba(0,0,0,0.3);padding:25px;text-align:center;"><p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;">© ' + new Date().getFullYear() + ' ' + CONFIG.COMPANY_NAME + '</p></td></tr></table></td></tr></table></body></html>';
     
-    const meetSection = meetLink && meetLink !== 'Appel téléphonique'
-      ? `<a href="${meetLink}" style="display:inline-block;padding:15px 30px;background:linear-gradient(135deg,#a855f7,#3b82f6);color:white;text-decoration:none;border-radius:12px;font-weight:bold;">🎥 Rejoindre la visio</a>`
-      : `<p style="color:#888;">📞 Un membre de notre équipe vous contactera.</p>`;
-    
-    const htmlBody = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 40px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .content { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; margin: 20px 0; }
-    .highlight { background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(59,130,246,0.2)); border-left: 4px solid #a855f7; padding: 20px; border-radius: 12px; margin: 20px 0; }
-    .footer { text-align: center; color: #888; font-size: 12px; margin-top: 30px; }
-    h2 { color: #fff; }
-    p { line-height: 1.8; color: rgba(255,255,255,0.85); }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">✨ ${CONFIG.COMPANY_NAME}</div>
-    </div>
-    
-    <div class="content">
-      <h2>Bonjour ${nomClient} 👋</h2>
-      
-      ${source === 'chatbot' ? `
-        <p>Votre rendez-vous est <strong>confirmé</strong> !</p>
-        
-        <div class="highlight">
-          <p><strong>📅 Date :</strong> ${dateFormatted}</p>
-          <p><strong>📝 Sujet :</strong> ${data.sujet || 'Discussion sur vos besoins en automatisation IA'}</p>
-        </div>
-        
-        <div style="text-align:center;margin:30px 0;">
-          ${meetSection}
-        </div>
-      ` : `
-        <p>Nous avons bien reçu votre message et vous en remercions.</p>
-        
-        <div class="highlight">
-          <p><strong>📝 Votre message :</strong></p>
-          <p style="font-style:italic;">"${data.sujet}"</p>
-        </div>
-        
-        <p>Notre équipe vous répondra dans les plus brefs délais.</p>
-      `}
-      
-      <p>À très bientôt,<br><strong>L'équipe ${CONFIG.COMPANY_NAME}</strong></p>
-    </div>
-    
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} ${CONFIG.COMPANY_NAME} - Agence d'Automatisation IA</p>
-      <p>Cet email a été envoyé automatiquement suite à votre demande.</p>
-    </div>
-  </div>
-</body>
-</html>
-    `;
-    
-    GmailApp.sendEmail(recipientEmail, sujet, `Confirmation - ${CONFIG.COMPANY_NAME}`, {
-      htmlBody: htmlBody,
-      name: CONFIG.COMPANY_NAME
-    });
-    
-    console.log('Email envoyé à:', recipientEmail);
-    
-  } catch (error) {
-    console.error('Erreur envoi email:', error);
-  }
+    GmailApp.sendEmail(email, sujet, 'Confirmation', {htmlBody: html, name: CONFIG.COMPANY_NAME});
+  } catch (e) {}
 }
 ```
 
-## 2. Activer l'API Calendar (Important !)
+## Instructions
 
-1. Dans Apps Script, cliquez sur **Services** (icône +) à gauche
-2. Recherchez **Google Calendar API**
-3. Cliquez sur **Ajouter**
-
-## 3. Redéployer le script
-
-1. Cliquez sur **Déployer** > **Gérer les déploiements**
-2. Cliquez sur l'icône ✏️ (modifier)
-3. Sélectionnez **Nouvelle version**
-4. Cliquez sur **Déployer**
-
-## 4. Autorisations requises
-
-Lors du premier déploiement, Google demandera les autorisations pour:
-
-- ✅ Lire/écrire Google Sheets
-- ✅ Lire/écrire Google Calendar
-- ✅ Envoyer des emails via Gmail
-
-> ⚠️ **Important**: Acceptez toutes les autorisations pour que le script fonctionne correctement.
-
-## Architecture
-
-```
-┌─────────────────┐      ┌─────────────────────┐
-│   Chatbot RDV   │─────▶│  Google Apps Script │
-│   (BLOCK_RDV)   │      │                     │
-└─────────────────┘      │  1. Sheet ✅        │
-                         │  2. Calendar 📅     │
-┌─────────────────┐      │  3. Email 📧        │
-│ Formulaire Web  │─────▶│                     │
-└─────────────────┘      └─────────────────────┘
-```
+1. Remplacez tout le code dans Apps Script
+2. Enregistrez (Ctrl+S)
+3. Déployez > Gérer > Modifier > Nouvelle version
