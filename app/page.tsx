@@ -134,24 +134,26 @@ export default function Home() {
 
           <div className="agents-grid">
             {[
-              { icon: '📞', title: 'Agent de Qualification & RDV 24/7', domain: 'Santé • Immobilier • Services', desc: 'Qualifie vos prospects et prend des RDV automatiquement, même à 3h du matin.', stat: '-70% no-shows', source: 'Cabinet dentaire Lyon' },
-              { icon: '🎙️', title: 'Assistant Vocal Mains Libres', domain: 'Artisans • Couvreurs • Électriciens', desc: 'Répond au téléphone quand vous êtes sur un chantier. Plus jamais d\'appel manqué.', stat: '1 chantier = rentabilisé', source: 'Un appel sauvé par mois suffit' },
-              { icon: '☀️', title: 'Calculateur Éligibilité & Devis IA', domain: 'Solaire • Rénovation Énergétique', desc: 'Pré-qualifie les clients et génère des devis. Ne transmettez que les dossiers finançables.', stat: 'Coût/lead : 45€ → 18€', source: 'Installateur photovoltaïque' },
-              { icon: '💬', title: 'Agent WhatsApp Commande B2B', domain: 'Grossistes • Fournisseurs • Logistique', desc: 'Interprète les messages vocaux ("10 sacs de ciment") et génère le bon de commande.', stat: '3h/jour économisées', source: 'Grossiste alimentaire' },
-              { icon: '🏠', title: 'Assistant Immo / Locataire IA', domain: 'Agences • Syndics • Gestionnaires', desc: 'Traite les questions récurrentes et qualifie les dossiers avant la première visite.', stat: '+40% temps gagné', source: 'Agence immobilière Paris' },
-              { icon: '✍️', title: 'Générateur Contenu & SEO Local', domain: 'Avocats • Notaires • Instituts de soin', desc: 'Rédige des articles SEO optimisés sans que vous n\'écriviez une seule ligne.', stat: '+180% trafic organique', source: 'Institut beauté Lille - 4 mois' },
-              { icon: '🎨', title: 'Module Simulation Immersive IA', domain: 'Paysagistes • Piscinistes • Architectes', desc: 'Visualisez le projet final à partir d\'une simple photo. Déclenchez l\'achat émotionnel.', stat: '+35% conversion devis', source: 'Pisciniste Bordeaux' },
-              { icon: '🎯', title: 'Prospecteur Automatisé B2B', domain: 'Nettoyage Industriel • Travaux Publics', desc: 'Messages ultra-personnalisés aux décideurs. Idéal pour les contrats récurrents.', stat: '12 contrats en 3 mois', source: 'Entreprise nettoyage' },
+              { icon: '📞', title: 'Agent de Qualification & RDV 24/7', domain: 'Santé • Immobilier • Services', desc: 'Qualifie vos prospects et prend des RDV automatiquement, même à 3h du matin.' },
+              { icon: '🎙️', title: 'Assistant Vocal Mains Libres', domain: 'Artisans • Couvreurs • Électriciens', desc: 'Répond au téléphone quand vous êtes sur un chantier. Plus jamais d\'appel manqué.' },
+              { icon: '☀️', title: 'Calculateur Éligibilité & Devis IA', domain: 'Solaire • Rénovation Énergétique', desc: 'Pré-qualifie les clients et génère des devis. Ne transmettez que les dossiers finançables.' },
+              { icon: '💬', title: 'Agent WhatsApp Commande B2B', domain: 'Grossistes • Fournisseurs • Logistique', desc: 'Interprète les messages vocaux et génère le bon de commande automatiquement.' },
+              { icon: '🏠', title: 'Assistant Immo / Locataire IA', domain: 'Agences • Syndics • Gestionnaires', desc: 'Traite les questions récurrentes et qualifie les dossiers avant la première visite.' },
+              { icon: '✍️', title: 'Générateur Contenu & SEO Local', domain: 'Avocats • Notaires • Instituts de soin', desc: 'Rédige des articles SEO optimisés sans que vous n\'écriviez une seule ligne.' },
+              { icon: '🎨', title: 'Module Simulation Immersive IA', domain: 'Paysagistes • Piscinistes • Architectes', desc: 'Visualisez le projet final à partir d\'une simple photo.' },
+              { icon: '🎯', title: 'Prospecteur Automatisé B2B', domain: 'Nettoyage Industriel • Travaux Publics', desc: 'Messages ultra-personnalisés aux décideurs. Idéal pour les contrats récurrents.' },
+              { icon: '📄', title: 'Agent de Profilage de CVs', domain: 'RH • Recrutement', desc: 'Analyse automatique des CVs, scoring des candidats, matching avec les postes ouverts.' },
+              { icon: '🎤', title: 'Transcription & Résumé Réunions', domain: 'Consulting • Management', desc: 'Transcription audio automatique + résumés intelligents et points d\'action.' },
+              { icon: '📝', title: 'Comptes Rendus Automatiques Calls', domain: 'Consulting • Vente', desc: 'Génération automatique de comptes rendus après chaque appel téléphonique ou visio.' },
+              { icon: '🤖', title: 'Chatbot IA Site Web', domain: 'E-commerce • SaaS • Services', desc: 'Assistant virtuel 24/7 pour répondre aux visiteurs et qualifier les leads.' },
+              { icon: '📧', title: 'Automatisation Email IA', domain: 'Marketing • Vente', desc: 'Rédaction, personnalisation et envoi d\'emails automatisés par IA.' },
+              { icon: '📊', title: 'Analyse Documentaire IA', domain: 'Juridique • Comptabilité', desc: 'Extraction d\'informations, classification et synthèse de documents volumineux.' },
             ].map((agent, i) => (
               <div key={i} className="agent-card hidden-el">
                 <div className="agent-icon">{agent.icon}</div>
                 <h3>{agent.title}</h3>
                 <p className="agent-domain">{agent.domain}</p>
                 <p className="agent-desc">{agent.desc}</p>
-                <div className="agent-stat">
-                  <span className="stat-highlight">{agent.stat}</span>
-                  <span className="stat-source">{agent.source}</span>
-                </div>
               </div>
             ))}
           </div>
