@@ -120,5 +120,86 @@
             "solution": "Automatisation des réponses rapides, captation de leads, visites virtuelles et menus interactifs",
             "argument_cle": "Ne laissez plus filer un mariage parce que vous n'avez pas répondu à temps"
         }
+    },
+    "produits": {
+        "agent_cv": {
+            "nom": "Agent de Profilage de CVs",
+            "secteurs": [
+                "RH",
+                "Recrutement"
+            ],
+            "description": "Analyse automatique des CVs, scoring des candidats selon vos critères, matching intelligent avec les postes ouverts",
+            "benefices": [
+                "Gain de temps sur le tri des candidatures",
+                "Objectivité dans l'évaluation",
+                "Ne ratez plus les bons profils"
+            ]
+        },
+        "transcription_reunions": {
+            "nom": "Transcription & Résumé Réunions",
+            "secteurs": [
+                "Consulting",
+                "Management"
+            ],
+            "description": "Transcription audio automatique de vos réunions avec génération de résumés intelligents et points d'action",
+            "benefices": [
+                "Fini les comptes rendus manuels",
+                "Historique consultable",
+                "Actions clairement identifiées"
+            ]
+        },
+        "comptes_rendus_calls": {
+            "nom": "Comptes Rendus Automatiques Calls",
+            "secteurs": [
+                "Consulting",
+                "Vente"
+            ],
+            "description": "Génération automatique de comptes rendus structurés après chaque appel téléphonique ou visio",
+            "benefices": [
+                "Traçabilité complète des échanges",
+                "Suivi client optimisé",
+                "Zéro saisie manuelle"
+            ]
+        },
+        "chatbot_ia": {
+            "nom": "Chatbot IA Site Web",
+            "secteurs": [
+                "E-commerce",
+                "SaaS",
+                "Services"
+            ],
+            "description": "Assistant virtuel intelligent disponible 24/7 pour répondre aux visiteurs, qualifier les leads et prendre des RDV",
+            "benefices": [
+                "Conversion visiteurs améliorée",
+                "Support client 24/7",
+                "Qualification automatique des leads"
+            ]
+        },
+        "automatisation_email": {
+            "nom": "Automatisation Email IA",
+            "secteurs": [
+                "Marketing",
+                "Vente"
+            ],
+            "description": "Rédaction, personnalisation et envoi d'emails automatisés par IA adaptés à chaque destinataire",
+            "benefices": [
+                "Emails personnalisés à grande échelle",
+                "Taux d'ouverture optimisé",
+                "Gain de temps commercial"
+            ]
+        },
+        "analyse_documentaire": {
+            "nom": "Analyse Documentaire IA",
+            "secteurs": [
+                "Juridique",
+                "Comptabilité"
+            ],
+            "description": "Extraction d'informations clés, classification automatique et synthèse de documents volumineux",
+            "benefices": [
+                "Analyse rapide de contrats",
+                "Détection d'anomalies",
+                "Synthèse en quelques secondes"
+            ]
+        }
     }
 }
