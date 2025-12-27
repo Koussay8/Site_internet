@@ -129,7 +129,7 @@ export default function Home() {
           <div className="section-title-wrap">
             <span className="section-subtitle">Nos Produits</span>
             <h2 className="section-title">Agents <span className="text-gradient">IA</span> Prêts à l&apos;Emploi</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto' }}>Des solutions clé en main, déployées en 2-4 semaines, avec des résultats mesurables dès le premier mois.</p>
+            <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto' }}>14 solutions clé en main, déployées en 2-4 semaines, pour transformer votre activité.</p>
           </div>
 
           <div className="agents-grid">
