@@ -1,0 +1,205 @@
+{
+    "agence": {
+        "nom": "NovaSolutions",
+        "mission": "Automatisation IA pour TPE/PME",
+        "approche": "On installe des assistants IA qui travaillent 24/7 pour vous libérer du temps et ne plus perdre de clients"
+    },
+    "secteurs": {
+        "sante_esthetique": {
+            "nom": "Esthéticiens & Médecine Esthétique",
+            "problemes": [
+                "Les gens n'osent pas appeler directement",
+                "Les messages Instagram restent sans réponse immédiate",
+                "Les questions sur les prix et les risques font hésiter les prospects"
+            ],
+            "solution": "Un assistant IA qui répond à 90% des questions 24/7, pré-qualifie les prospects, et simplifie le parcours vers la prise de rendez-vous (Doctolib ou téléphone)",
+            "argument_cle": "Si on vous apporte ne serait-ce que 3 à 5 nouveaux patients par mois, ça couvre largement le coût de notre service"
+        },
+        "dentistes_orthodontistes": {
+            "nom": "Dentistes & Orthodontistes",
+            "problemes": [
+                "Le No-Show : les rendez-vous non honorés représentent une perte sèche",
+                "Le standard téléphonique est saturé, les secrétaires débordées"
+            ],
+            "solution": "Un agent de confirmation et rappel automatique qui réduit drastiquement les absences, plus un chatbot qui répond aux questions fréquentes des patients",
+            "argument_cle": "Chaque No-Show évité, c'est un créneau qui rapporte au lieu de coûter"
+        },
+        "spas_bien_etre": {
+            "nom": "Spas & Instituts de Bien-Être",
+            "problemes": [
+                "Les créneaux vides sont des pertes sèches",
+                "Difficile de remplir les horaires creux (mardi matin, etc.)"
+            ],
+            "solution": "Un système de Yield Management IA qui envoie des promos flash SMS sur les créneaux vides pour les remplir en dernière minute",
+            "argument_cle": "Un créneau vide à -20% rapporte toujours plus qu'un créneau vide à 100%"
+        },
+        "artisans_batiment": {
+            "nom": "Artisans & Bâtiment",
+            "problemes": [
+                "Les artisans perdent des appels quand ils sont sur chantier",
+                "Les demandes de devis arrivent en masse mais peu sont qualifiées",
+                "Les clients ne savent pas s'ils ont droit aux aides (MaPrimeRénov, etc.)"
+            ],
+            "solution": "Un répondeur IA vocal qui décroche, qualifie le client sur la zone d'intervention, et envoie un SMS de confirmation de prise en compte",
+            "argument_cle": "Ne ratez plus aucun chantier parce que vous étiez sur une échelle"
+        },
+        "solaire_photovoltaique": {
+            "nom": "Solaire & Photovoltaïque",
+            "problemes": [
+                "Le secteur reçoit énormément de demandes mais la plupart ne sont pas qualifiées",
+                "Les entreprises paient 30 à 60€ le lead, c'est extrêmement cher",
+                "Besoin de filtrer, pré-qualifier, optimiser, réduire le coût d'acquisition"
+            ],
+            "solution": "Un agent IA + calculateur solaire qui pré-qualifie les leads avant qu'ils arrivent chez vous",
+            "argument_cle": "On vous livre uniquement des leads qualifiés, pas des curieux"
+        },
+        "fournisseurs_materiaux": {
+            "nom": "Fournisseurs & Grossistes Matériaux",
+            "problemes": [
+                "Les artisans clients sont souvent pressés et en retard numériquement",
+                "40 000 références en stock, impossible pour un humain de tout retenir",
+                "Les questions du type 'Tu as des vis de 12mm en stock?' prennent du temps au comptoir"
+            ],
+            "solution": "Un agent conversationnel connecté au stock qui répond instantanément aux questions produits",
+            "argument_cle": "Vos clients gagnent du temps, vous gagnez en efficacité"
+        },
+        "avocats_notaires": {
+            "nom": "Avocats & Notaires",
+            "problemes": [
+                "Passer 20 minutes à prendre les coordonnées d'un client au téléphone est une perte financière",
+                "Le divorce est émotionnellement lourd, les clients ont besoin d'empathie",
+                "Les sites web sont souvent vieillissants ou inexistants"
+            ],
+            "solution": "Un chatbot empathique qui collecte les informations préliminaires sans intervention humaine, et estime les besoins juridiques",
+            "argument_cle": "Vos collaborateurs se concentrent sur le fond, pas sur la prise de coordonnées"
+        },
+        "nettoyage_industriel": {
+            "nom": "Nettoyage Industriel",
+            "problemes": [
+                "Besoin constant de nouveaux contrats B2B",
+                "Prospection chronophage"
+            ],
+            "solution": "Service de génération de leads (scraping + email froid) ciblant les gestionnaires d'immeubles et les établissements privés",
+            "argument_cle": "On vous trouve les contacts, vous signez les contrats"
+        },
+        "immobilier": {
+            "nom": "Immobilier & Habitat",
+            "problemes": [
+                "Les mandataires ont besoin de se démarquer sur internet",
+                "Les appels incessants des locataires pour des petits problèmes",
+                "Les architectes d'intérieur ont besoin de visuels de qualité"
+            ],
+            "solution": "Sites personnels de marque pour mandataires, assistants locataires IA, et outils de génération d'images par IA pour les architectes",
+            "argument_cle": "Se différencier sans y passer des heures"
+        },
+        "logistique_grossiste": {
+            "nom": "Logistique & Grossistes Alimentaires",
+            "problemes": [
+                "Les commandes arrivent de partout : WhatsApp, email, téléphone",
+                "50% du temps administratif perdu, 80% d'erreurs de commande possibles"
+            ],
+            "solution": "Un numéro WhatsApp Business + agent IA + export email unifié",
+            "argument_cle": "Simplifiez 100% des commandes nocturnes et recommandations automatiques"
+        },
+        "ecoles_privees": {
+            "nom": "Écoles Privées & Formation",
+            "problemes": [
+                "Les parents 'magasinent' entre les écoles, beaucoup de questions",
+                "Le taux de réussite est un argument marketing, mais pas toujours bien mis en avant"
+            ],
+            "solution": "Un chatbot pédagogique qui rassure sur les questions des parents + widget de taux de réussite sur le site",
+            "argument_cle": "Répondre aux parents 24/7 augmente les inscriptions"
+        },
+        "evenementiel_traiteurs": {
+            "nom": "Événementiel & Traiteurs",
+            "problemes": [
+                "Rebond post-Covid avec énormément de demandes",
+                "Trésorerie serrée donc pas de recrutement possible",
+                "Chaque devis raté = 1000 à 20000€ perdus"
+            ],
+            "solution": "Automatisation des réponses rapides, captation de leads, visites virtuelles et menus interactifs",
+            "argument_cle": "Ne laissez plus filer un mariage parce que vous n'avez pas répondu à temps"
+        }
+    },
+    "produits": {
+        "agent_cv": {
+            "nom": "Agent de Profilage de CVs",
+            "secteurs": [
+                "RH",
+                "Recrutement"
+            ],
+            "description": "Analyse automatique des CVs, scoring des candidats selon vos critères, matching intelligent avec les postes ouverts",
+            "benefices": [
+                "Gain de temps sur le tri des candidatures",
+                "Objectivité dans l'évaluation",
+                "Ne ratez plus les bons profils"
+            ]
+        },
+        "transcription_reunions": {
+            "nom": "Transcription & Résumé Réunions",
+            "secteurs": [
+                "Consulting",
+                "Management"
+            ],
+            "description": "Transcription audio automatique de vos réunions avec génération de résumés intelligents et points d'action",
+            "benefices": [
+                "Fini les comptes rendus manuels",
+                "Historique consultable",
+                "Actions clairement identifiées"
+            ]
+        },
+        "comptes_rendus_calls": {
+            "nom": "Comptes Rendus Automatiques Calls",
+            "secteurs": [
+                "Consulting",
+                "Vente"
+            ],
+            "description": "Génération automatique de comptes rendus structurés après chaque appel téléphonique ou visio",
+            "benefices": [
+                "Traçabilité complète des échanges",
+                "Suivi client optimisé",
+                "Zéro saisie manuelle"
+            ]
+        },
+        "chatbot_ia": {
+            "nom": "Chatbot IA Site Web",
+            "secteurs": [
+                "E-commerce",
+                "SaaS",
+                "Services"
+            ],
+            "description": "Assistant virtuel intelligent disponible 24/7 pour répondre aux visiteurs, qualifier les leads et prendre des RDV",
+            "benefices": [
+                "Conversion visiteurs améliorée",
+                "Support client 24/7",
+                "Qualification automatique des leads"
+            ]
+        },
+        "automatisation_email": {
+            "nom": "Automatisation Email IA",
+            "secteurs": [
+                "Marketing",
+                "Vente"
+            ],
+            "description": "Rédaction, personnalisation et envoi d'emails automatisés par IA adaptés à chaque destinataire",
+            "benefices": [
+                "Emails personnalisés à grande échelle",
+                "Taux d'ouverture optimisé",
+                "Gain de temps commercial"
+            ]
+        },
+        "analyse_documentaire": {
+            "nom": "Analyse Documentaire IA",
+            "secteurs": [
+                "Juridique",
+                "Comptabilité"
+            ],
+            "description": "Extraction d'informations clés, classification automatique et synthèse de documents volumineux",
+            "benefices": [
+                "Analyse rapide de contrats",
+                "Détection d'anomalies",
+                "Synthèse en quelques secondes"
+            ]
+        }
+    }
+}
