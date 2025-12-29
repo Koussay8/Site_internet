@@ -9,7 +9,7 @@ export async function GET(
 ) {
     try {
         const auth = await verifyAuth(request);
-        if (!auth.success) {
+        if (!auth) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
@@ -48,7 +48,7 @@ export async function POST(
 ) {
     try {
         const auth = await verifyAuth(request);
-        if (!auth.success) {
+        if (!auth) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
@@ -125,7 +125,7 @@ export async function DELETE(
 ) {
     try {
         const auth = await verifyAuth(request);
-        if (!auth.success) {
+        if (!auth) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
