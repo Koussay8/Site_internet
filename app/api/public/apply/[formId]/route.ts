@@ -9,6 +9,15 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // Vercel: augmenter le timeout à 60 secondes
 export const maxDuration = 60;
 
+// Fonction pour nettoyer le texte (supprimer caractères null et invalides pour PostgreSQL)
+function cleanText(text: string): string {
+    if (!text) return '';
+    return text
+        .replace(/\u0000/g, '')
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        .trim();
+}
+
 
 // GET - Récupérer un formulaire public (sans auth)
 export async function GET(
@@ -87,6 +96,8 @@ export async function POST(
                 if (ocrResponse.ok) {
                     const ocrData = await ocrResponse.json();
                     extractedText = ocrData.data?.[0] || '';
+                    // Nettoyer le texte
+                    extractedText = cleanText(extractedText);
                 }
             } catch (e) {
                 console.error('OCR error:', e);

@@ -10,6 +10,15 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // Vercel: augmenter le timeout à 60 secondes
 export const maxDuration = 60;
 
+// Fonction pour nettoyer le texte (supprimer caractères null et autres invalides pour PostgreSQL)
+function cleanText(text: string): string {
+    if (!text) return '';
+    // Supprimer les caractères null (\u0000) et autres caractères de contrôle
+    return text
+        .replace(/\u0000/g, '') // Supprimer null bytes
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Supprimer autres caractères de contrôle
+        .trim();
+}
 
 // POST - Upload de CVs avec OCR + AI
 export async function POST(request: NextRequest) {
@@ -83,6 +92,9 @@ export async function POST(request: NextRequest) {
                     // Fallback
                     extractedText = await extractTextFromPDF(buffer);
                 }
+
+                // Nettoyer le texte (supprimer caractères null et invalides)
+                extractedText = cleanText(extractedText);
 
                 // Mettre à jour le statut à 50%
                 await supabase
