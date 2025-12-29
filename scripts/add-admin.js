@@ -1,46 +1,68 @@
+// Script pour ajouter l'utilisateur admin
+// Exécutez: node scripts/add-admin.js
+
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 
-const supabaseUrl = 'https://rvjpezmescqykhgfgssp.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2anBlem1lc2NxeWtoZ2Znc3NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NDkyMDYsImV4cCI6MjA4MjQyNTIwNn0.wr8M4zX0f9Hvi1PyG2SKh9QvxZrxLMN2vJULaWc5Kpc';
+// Remplacez par votre vraie URL Supabase
+const SUPABASE_URL = 'https://rvjpezmescqykhgfgssp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2anBlem1lc2NxeWtoZ2Znc3NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NDkyMDYsImV4cCI6MjA4MjQyNTIwNn0.wr8M4zX0f9Hvi1PyG2SKh9QvxZrxLMN2vJULaWc5Kpc';
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function addAdmin() {
-    console.log('=== AJOUT DE L\'UTILISATEUR admin@nova.com ===\n');
+    console.log('🔐 Ajout de l\'utilisateur admin...\n');
 
-    // Générer le hash du mot de passe
+    const email = 'admin@nova.com';
     const password = 'nova2024';
-    const passwordHash = await bcrypt.hash(password, 12);
+    const companyName = 'NovaSolutions';
 
-    console.log('Mot de passe:', password);
-    console.log('Hash généré:', passwordHash);
-    console.log('');
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Ajouter l'utilisateur
-    const { data, error } = await supabase
+    // Vérifier si l'utilisateur existe déjà
+    const { data: existing } = await supabase
         .from('clients')
-        .insert({
-            company_name: 'Admin',
-            email: 'admin@nova.com',
-            password_hash: passwordHash,
-            applications: ['cv-profiler'],
-            is_active: true
-        })
-        .select()
+        .select('id')
+        .eq('email', email)
         .single();
 
-    if (error) {
-        console.error('❌ Erreur:', error.message);
+    if (existing) {
+        console.log('⚠️  L\'utilisateur existe déjà. Mise à jour du mot de passe...');
+
+        const { error } = await supabase
+            .from('clients')
+            .update({ password_hash: hashedPassword })
+            .eq('email', email);
+
+        if (error) {
+            console.error('❌ Erreur:', error.message);
+        } else {
+            console.log('✅ Mot de passe mis à jour!');
+        }
     } else {
-        console.log('✅ Utilisateur créé avec succès!');
-        console.log('Email:', data.email);
-        console.log('Company:', data.company_name);
-        console.log('');
-        console.log('🔑 Identifiants de connexion:');
-        console.log('   Email: admin@nova.com');
-        console.log('   Mot de passe: nova2024');
+        // Créer le nouvel utilisateur
+        const { data, error } = await supabase
+            .from('clients')
+            .insert({
+                email,
+                password_hash: hashedPassword,
+                company_name: companyName,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Erreur:', error.message);
+        } else {
+            console.log('✅ Utilisateur créé avec succès!');
+            console.log('   ID:', data.id);
+        }
     }
+
+    console.log('\n📧 Email: admin@nova.com');
+    console.log('🔑 Mot de passe: nova2024');
+    console.log('\nVous pouvez maintenant vous connecter!');
 }
 
 addAdmin().catch(console.error);

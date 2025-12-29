@@ -1,15 +1,33 @@
 -- ============================================
--- CV PROFILER - Database Schema
+-- SCRIPT SQL COMPLET ET CORRIGÉ
+-- CV Profiler - Schéma de Base de Données
 -- ============================================
 
--- Enable UUID extension
+-- 1. Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
--- CANDIDATES TABLE
+-- 2. TABLE CLIENTS (Authentification Custom)
 -- ============================================
-CREATE TABLE IF NOT EXISTS candidates (
+CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    company_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    applications JSONB DEFAULT '["cv-profiler"]',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    last_login TIMESTAMPTZ
+);
+
+-- ============================================
+-- 3. TABLE CANDIDATES
+-- ============================================
+DROP TABLE IF EXISTS candidates CASCADE;
+CREATE TABLE candidates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     email TEXT,
     phone TEXT,
@@ -18,127 +36,150 @@ CREATE TABLE IF NOT EXISTS candidates (
     education JSONB DEFAULT '[]',
     cv_url TEXT,
     cv_text TEXT,
-    match_score NUMERIC,
+    match_score NUMERIC(5,2),
     psychological_profile JSONB,
-    playground_ids UUID[] DEFAULT '{}',
-    user_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    playground_ids TEXT[] DEFAULT '{}',
+    source_form_id UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_candidates_user_id ON candidates(user_id);
-CREATE INDEX idx_candidates_email ON candidates(email);
+-- Index pour recherche
+CREATE INDEX IF NOT EXISTS idx_candidates_user_id ON candidates(user_id);
+CREATE INDEX IF NOT EXISTS idx_candidates_skills ON candidates USING gin (skills);
 
 -- ============================================
--- JOBS TABLE
+-- 4. TABLE JOBS
 -- ============================================
-CREATE TABLE IF NOT EXISTS jobs (
+DROP TABLE IF EXISTS jobs CASCADE;
+CREATE TABLE jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
     required_skills JSONB DEFAULT '[]',
     min_experience INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
-    user_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_jobs_user_id ON jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id);
 
 -- ============================================
--- PLAYGROUNDS TABLE
+-- 5. TABLE PLAYGROUNDS
 -- ============================================
-CREATE TABLE IF NOT EXISTS playgrounds (
+DROP TABLE IF EXISTS playgrounds CASCADE;
+CREATE TABLE playgrounds (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     color TEXT DEFAULT '#8B5CF6',
-    candidate_ids UUID[] DEFAULT '{}',
-    user_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    candidate_ids TEXT[] DEFAULT '{}',
+    job_ids TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_playgrounds_user_id ON playgrounds(user_id);
+CREATE INDEX IF NOT EXISTS idx_playgrounds_user_id ON playgrounds(user_id);
 
 -- ============================================
--- PUBLIC FORMS TABLE
+-- 6. TABLE FORMS
 -- ============================================
-CREATE TABLE IF NOT EXISTS public_forms (
+DROP TABLE IF EXISTS forms CASCADE;
+CREATE TABLE forms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
-    job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+    job_id UUID,
     fields JSONB DEFAULT '[]',
+    slug TEXT,
     is_active BOOLEAN DEFAULT true,
-    user_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_public_forms_user_id ON public_forms(user_id);
+CREATE INDEX IF NOT EXISTS idx_forms_user_id ON forms(user_id);
+CREATE INDEX IF NOT EXISTS idx_forms_slug ON forms(slug);
 
 -- ============================================
--- UPLOAD STATUS TABLE
+-- 7. TABLE FORM_SUBMISSIONS
 -- ============================================
-CREATE TABLE IF NOT EXISTS upload_status (
+DROP TABLE IF EXISTS form_submissions CASCADE;
+CREATE TABLE form_submissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    form_id UUID REFERENCES forms(id) ON DELETE CASCADE,
+    candidate_id UUID REFERENCES candidates(id) ON DELETE SET NULL,
+    data JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- 8. TABLE UPLOAD_STATUS
+-- ============================================
+DROP TABLE IF EXISTS upload_status CASCADE;
+CREATE TABLE upload_status (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     filename TEXT NOT NULL,
     status TEXT DEFAULT 'pending',
     progress INTEGER DEFAULT 0,
-    candidate_id UUID REFERENCES candidates(id) ON DELETE SET NULL,
+    candidate_id UUID,
     error TEXT,
-    user_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_upload_status_user_id ON upload_status(user_id);
+-- ============================================
+-- 9. ROW LEVEL SECURITY (Désactivé pour simplifier)
+-- ============================================
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE playgrounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE forms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE upload_status ENABLE ROW LEVEL SECURITY;
+
+-- Policies permissives (l'API gère la sécurité)
+CREATE POLICY "Allow all" ON clients FOR ALL USING (true);
+CREATE POLICY "Allow all" ON candidates FOR ALL USING (true);
+CREATE POLICY "Allow all" ON jobs FOR ALL USING (true);
+CREATE POLICY "Allow all" ON playgrounds FOR ALL USING (true);
+CREATE POLICY "Allow all" ON forms FOR ALL USING (true);
+CREATE POLICY "Allow all" ON form_submissions FOR ALL USING (true);
+CREATE POLICY "Allow all" ON upload_status FOR ALL USING (true);
 
 -- ============================================
--- UPDATED_AT TRIGGER
+-- 10. FONCTION UPDATE TIMESTAMP
 -- ============================================
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_candidates_updated_at
-    BEFORE UPDATE ON candidates
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+-- Triggers
+DROP TRIGGER IF EXISTS update_candidates_updated_at ON candidates;
+DROP TRIGGER IF EXISTS update_jobs_updated_at ON jobs;
+DROP TRIGGER IF EXISTS update_playgrounds_updated_at ON playgrounds;
+DROP TRIGGER IF EXISTS update_forms_updated_at ON forms;
 
-CREATE TRIGGER update_jobs_updated_at
-    BEFORE UPDATE ON jobs
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_playgrounds_updated_at
-    BEFORE UPDATE ON playgrounds
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_public_forms_updated_at
-    BEFORE UPDATE ON public_forms
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_upload_status_updated_at
-    BEFORE UPDATE ON upload_status
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_candidates_updated_at BEFORE UPDATE ON candidates FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_playgrounds_updated_at BEFORE UPDATE ON playgrounds FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_forms_updated_at BEFORE UPDATE ON forms FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================
--- ROW LEVEL SECURITY
+-- 11. DONNÉES INITIALES
 -- ============================================
-ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE playgrounds ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public_forms ENABLE ROW LEVEL SECURITY;
-ALTER TABLE upload_status ENABLE ROW LEVEL SECURITY;
+-- L'admin sera créé via le script node scripts/add-admin.js
+-- après l'exécution de ce script SQL
 
--- Note: RLS policies should be created based on your authentication setup
+-- ============================================
+-- TERMINÉ !
+-- ============================================

@@ -123,8 +123,8 @@ async function calculateCompatibility(candidate: any, job: any): Promise<Compati
                 return {
                     value: baseScore,
                     explanation: aiScore.explanation,
-                    matchedSkills: matchedSkills.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
-                    missingSkills: missingSkills.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                    matchedSkills: matchedSkills.map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
+                    missingSkills: missingSkills.map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)),
                 };
             }
         } catch (e) {
