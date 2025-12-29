@@ -69,32 +69,38 @@ export async function POST(request: NextRequest) {
                 let extractedText = '';
 
                 try {
+                    console.log('Calling OCR API:', OCR_API_URL);
                     const ocrResponse = await fetch(OCR_API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            data: [`data:${file.type};base64,${base64}`]
+                            image_base64: base64
                         }),
                     });
 
+                    console.log('OCR Response status:', ocrResponse.status);
+
                     if (ocrResponse.ok) {
                         const ocrData = await ocrResponse.json();
-                        // Le format Gradio retourne généralement { data: [result] }
-                        extractedText = ocrData.data?.[0] || '';
-                        console.log('OCR extracted text length:', extractedText.length);
+                        console.log('OCR Response:', JSON.stringify(ocrData).substring(0, 500));
+                        // Votre API retourne { text: "...", confidence: ..., method: "paddleocr" }
+                        extractedText = ocrData.text || '';
                     } else {
-                        console.error('OCR API error:', await ocrResponse.text());
-                        // Fallback: extraction basique pour les PDFs
-                        extractedText = await extractTextFromPDF(buffer);
+                        const errorText = await ocrResponse.text();
+                        console.error('OCR API error:', errorText);
                     }
                 } catch (ocrError) {
                     console.error('OCR service error:', ocrError);
-                    // Fallback
-                    extractedText = await extractTextFromPDF(buffer);
                 }
 
                 // Nettoyer le texte (supprimer caractères null et invalides)
                 extractedText = cleanText(extractedText);
+
+                // Log de diagnostic
+                console.log(`File: ${file.name}`);
+                console.log(`OCR text length: ${extractedText.length}`);
+                console.log(`OCR sample: ${extractedText.substring(0, 200)}`);
+                console.log(`Has GROQ_API_KEY: ${!!GROQ_API_KEY}`);
 
                 // Mettre à jour le statut à 50%
                 await supabase
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
                     .eq('id', uploadStatus.id);
 
                 // === ÉTAPE 2: Analyse IA avec Groq/Llama-3 ===
-                const candidateData = await analyzeWithGroq(extractedText);
+                const candidateData = await analyzeWithGroq(extractedText, file.name);
 
                 // Mettre à jour le statut à 80%
                 await supabase
@@ -176,7 +182,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Analyse avec Groq/Llama-3
-async function analyzeWithGroq(text: string): Promise<{
+async function analyzeWithGroq(text: string, fileName?: string): Promise<{
     name: string;
     email: string;
     phone: string;
@@ -186,7 +192,7 @@ async function analyzeWithGroq(text: string): Promise<{
     psychological_profile: object | null;
 }> {
     if (!GROQ_API_KEY || !text || text.length < 10) {
-        return fallbackParsing(text);
+        return fallbackParsing(text, fileName);
     }
 
     try {
@@ -267,11 +273,11 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`
         console.error('Groq API error:', error);
     }
 
-    return fallbackParsing(text);
+    return fallbackParsing(text, fileName);
 }
 
 // Fallback si Groq échoue
-function fallbackParsing(text: string): {
+function fallbackParsing(text: string, fileName?: string): {
     name: string;
     email: string;
     phone: string;
@@ -284,7 +290,8 @@ function fallbackParsing(text: string): {
     const phoneMatch = text.match(/(?:\+33|0)\s*[1-9](?:[\s.-]*\d{2}){4}/);
 
     const lines = text.split('\n').filter(l => l.trim());
-    let name = 'Candidat Importé';
+    // Utiliser le nom de fichier comme nom par défaut si disponible
+    let name = fileName ? fileName.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ') : 'Candidat Importé';
 
     for (const line of lines.slice(0, 5)) {
         const cleaned = line.trim();
