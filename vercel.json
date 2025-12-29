@@ -1,5 +1,15 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/upload/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/public/apply/*/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }

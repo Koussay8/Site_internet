@@ -6,6 +6,10 @@ const OCR_API_URL = process.env.OCR_API_URL || 'https://external8-cv-profiler-oc
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// Vercel: augmenter le timeout à 60 secondes
+export const maxDuration = 60;
+
+
 // GET - Récupérer un formulaire public (sans auth)
 export async function GET(
     request: NextRequest,

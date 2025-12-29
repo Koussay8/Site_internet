@@ -7,6 +7,10 @@ const OCR_API_URL = process.env.OCR_API_URL || 'https://external8-cv-profiler-oc
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// Vercel: augmenter le timeout à 60 secondes
+export const maxDuration = 60;
+
+
 // POST - Upload de CVs avec OCR + AI
 export async function POST(request: NextRequest) {
     try {
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest) {
                 const arrayBuffer = await file.arrayBuffer();
                 const buffer = Buffer.from(arrayBuffer);
                 const base64 = buffer.toString('base64');
-                
+
                 // Mettre à jour le statut à 20%
                 await supabase
                     .from('upload_status')
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
 
                 // === ÉTAPE 1: OCR avec PaddleOCR (HuggingFace) ===
                 let extractedText = '';
-                
+
                 try {
                     const ocrResponse = await fetch(OCR_API_URL, {
                         method: 'POST',
@@ -231,7 +235,7 @@ Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`
         if (response.ok) {
             const data = await response.json();
             const content = data.choices?.[0]?.message?.content || '';
-            
+
             // Extraire le JSON de la réponse
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
@@ -266,10 +270,10 @@ function fallbackParsing(text: string): {
 } {
     const emailMatch = text.match(/[\w.-]+@[\w.-]+\.\w+/);
     const phoneMatch = text.match(/(?:\+33|0)\s*[1-9](?:[\s.-]*\d{2}){4}/);
-    
+
     const lines = text.split('\n').filter(l => l.trim());
     let name = 'Candidat Importé';
-    
+
     for (const line of lines.slice(0, 5)) {
         const cleaned = line.trim();
         if (cleaned && !cleaned.includes('@') && !cleaned.match(/^\d/) && cleaned.length < 50) {
@@ -277,7 +281,7 @@ function fallbackParsing(text: string): {
             break;
         }
     }
-    
+
     const skillKeywords = [
         'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Ruby', 'Go', 'Rust', 'Swift', 'PHP',
         'React', 'Vue', 'Angular', 'Next.js', 'Node.js', 'Express', 'Django', 'Flask', 'Spring', 'Laravel',
