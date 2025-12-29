@@ -13,6 +13,8 @@ import {
     Loader2,
     ToggleLeft,
     ToggleRight,
+    Check,
+    Link as LinkIcon,
 } from 'lucide-react';
 
 interface FormField {
@@ -36,20 +38,96 @@ export default function FormsPage() {
     const [forms, setForms] = useState<PublicForm[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [search, setSearch] = useState('');
+    const [copiedId, setCopiedId] = useState<string | null>(null);
 
     useEffect(() => {
-        // Simuler le chargement - à remplacer par appel API
-        setTimeout(() => {
-            setForms([]);
-            setIsLoading(false);
-        }, 500);
+        loadForms();
     }, []);
+
+    const loadForms = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch('/api/forms', {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setForms(data);
+            }
+        } catch (error) {
+            console.error('Failed to load forms:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const createForm = async (data: Partial<PublicForm>) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch('/api/forms', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            if (response.ok) {
+                await loadForms();
+                setShowCreateModal(false);
+            }
+        } catch (error) {
+            console.error('Failed to create form:', error);
+        }
+    };
+
+    const deleteForm = async (id: string) => {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer ce formulaire ?')) return;
+
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/forms/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            await loadForms();
+        } catch (error) {
+            console.error('Failed to delete form:', error);
+        }
+    };
+
+    const toggleFormActive = async (form: PublicForm) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/forms/${form.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...form, is_active: !form.is_active }),
+            });
+            await loadForms();
+        } catch (error) {
+            console.error('Failed to toggle form:', error);
+        }
+    };
 
     const copyFormLink = (formId: string) => {
         const url = `${window.location.origin}/apply/${formId}`;
         navigator.clipboard.writeText(url);
-        alert('Lien copié !');
+        setCopiedId(formId);
+        setTimeout(() => setCopiedId(null), 2000);
     };
+
+    const openFormLink = (formId: string) => {
+        window.open(`/apply/${formId}`, '_blank');
+    };
+
+    const filteredForms = forms.filter(f =>
+        f.title.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <div style={{ minHeight: '100vh', background: '#FAFAF9' }}>
@@ -66,6 +144,8 @@ export default function FormsPage() {
                         <input
                             type="text"
                             placeholder="Rechercher..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
                             className="cvp-search-input"
                         />
                     </div>
@@ -87,9 +167,9 @@ export default function FormsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px' }}>
                         <Loader2 className="dashboard-loader-icon" />
                     </div>
-                ) : forms.length > 0 ? (
+                ) : filteredForms.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '16px' }}>
-                        {forms.map((form) => (
+                        {filteredForms.map((form) => (
                             <div key={form.id} className="cvp-card" style={{ position: 'relative' }}>
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                                     <div className="cvp-stat-icon violet">
@@ -105,8 +185,46 @@ export default function FormsPage() {
                                     </div>
                                 </div>
 
+                                {/* Public Link */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '10px 12px',
+                                    background: '#f8fafc',
+                                    borderRadius: '8px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <LinkIcon size={14} color="#64748b" />
+                                    <span style={{ flex: 1, fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {window.location.origin}/apply/{form.id}
+                                    </span>
+                                    <button
+                                        onClick={() => copyFormLink(form.id)}
+                                        style={{
+                                            padding: '4px 8px',
+                                            background: copiedId === form.id ? '#dcfce7' : '#e2e8f0',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: 500,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            color: copiedId === form.id ? '#166534' : '#374151'
+                                        }}
+                                    >
+                                        {copiedId === form.id ? <Check size={12} /> : <Copy size={12} />}
+                                        {copiedId === form.id ? 'Copié!' : 'Copier'}
+                                    </button>
+                                </div>
+
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button
+                                        onClick={() => toggleFormActive(form)}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer' }}
+                                    >
                                         {form.is_active ? (
                                             <>
                                                 <ToggleRight size={20} color="#059669" />
@@ -118,29 +236,18 @@ export default function FormsPage() {
                                                 <span style={{ fontSize: '13px', color: '#94a3b8' }}>Inactif</span>
                                             </>
                                         )}
-                                    </div>
+                                    </button>
 
                                     <div style={{ display: 'flex', gap: '4px' }}>
                                         <button
-                                            onClick={() => copyFormLink(form.id)}
-                                            style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
-                                            title="Copier le lien"
-                                        >
-                                            <Copy size={16} />
-                                        </button>
-                                        <button
+                                            onClick={() => openFormLink(form.id)}
                                             style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
                                             title="Ouvrir"
                                         >
                                             <ExternalLink size={16} />
                                         </button>
                                         <button
-                                            style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
-                                            title="Modifier"
-                                        >
-                                            <Edit size={16} />
-                                        </button>
-                                        <button
+                                            onClick={() => deleteForm(form.id)}
                                             style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
                                             title="Supprimer"
                                         >
@@ -187,11 +294,7 @@ export default function FormsPage() {
             {showCreateModal && (
                 <CreateFormModal
                     onClose={() => setShowCreateModal(false)}
-                    onSave={async (data) => {
-                        // TODO: Appeler l'API pour créer le formulaire
-                        console.log('Creating form:', data);
-                        setShowCreateModal(false);
-                    }}
+                    onSave={createForm}
                 />
             )}
         </div>

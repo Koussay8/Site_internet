@@ -386,22 +386,6 @@ export default function CVProfilerDashboard() {
                         )}
                     </div>
                 </div>
-
-                {/* Quick Links */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' }}>
-                    <Link href="/cv-profiler/candidates" className="cvp-card" style={{ textDecoration: 'none', textAlign: 'center', padding: '24px' }}>
-                        <Users size={24} color="#8B5CF6" style={{ marginBottom: '8px' }} />
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>Voir tous les candidats</div>
-                    </Link>
-                    <Link href="/cv-profiler/jobs" className="cvp-card" style={{ textDecoration: 'none', textAlign: 'center', padding: '24px' }}>
-                        <Briefcase size={24} color="#3B82F6" style={{ marginBottom: '8px' }} />
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>Gérer les postes</div>
-                    </Link>
-                    <Link href="/cv-profiler/playgrounds" className="cvp-card" style={{ textDecoration: 'none', textAlign: 'center', padding: '24px' }}>
-                        <FolderKanban size={24} color="#10B981" style={{ marginBottom: '8px' }} />
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>Mes playgrounds</div>
-                    </Link>
-                </div>
             </div>
         </div>
     );
