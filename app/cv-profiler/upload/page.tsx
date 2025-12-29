@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Upload,
@@ -10,16 +10,37 @@ import {
     AlertCircle,
     Loader2,
     ArrowLeft,
+    Image as ImageIcon,
 } from 'lucide-react';
 
 interface UploadFile {
     file: File;
     id: string;
-    status: 'pending' | 'uploading' | 'completed' | 'error';
+    status: 'pending' | 'uploading' | 'processing' | 'completed' | 'error';
     progress: number;
     error?: string;
     candidateId?: string;
+    candidateName?: string;
 }
+
+// Formats supportés par PaddleOCR
+const SUPPORTED_FORMATS = [
+    '.pdf', '.docx', '.doc', '.txt',
+    '.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tiff', '.tif', '.gif'
+];
+
+const MIME_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'text/plain',
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/bmp',
+    'image/tiff',
+    'image/gif'
+];
 
 export default function UploadPage() {
     const [files, setFiles] = useState<UploadFile[]>([]);
@@ -50,11 +71,13 @@ export default function UploadPage() {
         }
     };
 
+    const isValidFile = (file: File): boolean => {
+        const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+        return SUPPORTED_FORMATS.includes(ext) || MIME_TYPES.includes(file.type);
+    };
+
     const addFiles = (newFiles: File[]) => {
-        const validFiles = newFiles.filter(f => {
-            const ext = f.name.toLowerCase();
-            return ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.doc') || ext.endsWith('.txt');
-        });
+        const validFiles = newFiles.filter(isValidFile);
 
         const uploadFiles: UploadFile[] = validFiles.map(file => ({
             file,
@@ -70,6 +93,13 @@ export default function UploadPage() {
         setFiles(prev => prev.filter(f => f.id !== id));
     };
 
+    const getFileIcon = (file: File) => {
+        if (file.type.startsWith('image/')) {
+            return <ImageIcon size={18} color="#3b82f6" />;
+        }
+        return <FileText size={18} color="#64748b" />;
+    };
+
     const uploadFiles = async () => {
         if (files.length === 0 || isUploading) return;
 
@@ -78,9 +108,9 @@ export default function UploadPage() {
         const pendingFiles = files.filter(f => f.status === 'pending');
 
         for (const uploadFile of pendingFiles) {
-            // Mettre à jour le statut
+            // Phase 1: Uploading
             setFiles(prev => prev.map(f =>
-                f.id === uploadFile.id ? { ...f, status: 'uploading', progress: 10 } : f
+                f.id === uploadFile.id ? { ...f, status: 'uploading', progress: 20 } : f
             ));
 
             try {
@@ -88,6 +118,22 @@ export default function UploadPage() {
                 formData.append('files', uploadFile.file);
 
                 const token = localStorage.getItem('auth_token');
+
+                // Simulation de progression pendant l'OCR
+                const progressInterval = setInterval(() => {
+                    setFiles(prev => prev.map(f => {
+                        if (f.id === uploadFile.id && f.status === 'uploading' && f.progress < 80) {
+                            return { ...f, progress: f.progress + 10 };
+                        }
+                        return f;
+                    }));
+                }, 500);
+
+                // Phase 2: Processing (OCR + AI)
+                setFiles(prev => prev.map(f =>
+                    f.id === uploadFile.id ? { ...f, status: 'processing', progress: 50 } : f
+                ));
+
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     headers: {
@@ -96,10 +142,13 @@ export default function UploadPage() {
                     body: formData,
                 });
 
+                clearInterval(progressInterval);
+
                 if (response.ok) {
                     const data = await response.json();
                     const result = data.results?.[0];
 
+                    // Phase 3: Completed
                     setFiles(prev => prev.map(f =>
                         f.id === uploadFile.id
                             ? {
@@ -107,6 +156,7 @@ export default function UploadPage() {
                                 status: result?.status === 'completed' ? 'completed' : 'error',
                                 progress: 100,
                                 candidateId: result?.candidate_id,
+                                candidateName: result?.candidate_name,
                                 error: result?.error,
                             }
                             : f
@@ -117,7 +167,7 @@ export default function UploadPage() {
             } catch (error) {
                 setFiles(prev => prev.map(f =>
                     f.id === uploadFile.id
-                        ? { ...f, status: 'error', error: 'Erreur lors de l\'upload' }
+                        ? { ...f, status: 'error', progress: 100, error: 'Erreur lors de l\'upload' }
                         : f
                 ));
             }
@@ -128,6 +178,7 @@ export default function UploadPage() {
 
     const completedCount = files.filter(f => f.status === 'completed').length;
     const errorCount = files.filter(f => f.status === 'error').length;
+    const pendingCount = files.filter(f => f.status === 'pending').length;
 
     return (
         <div style={{ minHeight: '100vh', background: '#FAFAF9' }}>
@@ -179,8 +230,11 @@ export default function UploadPage() {
                     <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
                         Glissez vos CVs ici
                     </h3>
+                    <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 8px 0' }}>
+                        <strong>Documents:</strong> PDF, DOCX, DOC, TXT
+                    </p>
                     <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>
-                        Formats acceptés: PDF, DOCX, DOC, TXT
+                        <strong>Images:</strong> PNG, JPG, JPEG, WEBP, BMP, TIFF
                     </p>
 
                     <label
@@ -202,7 +256,7 @@ export default function UploadPage() {
                         <input
                             type="file"
                             multiple
-                            accept=".pdf,.docx,.doc,.txt"
+                            accept={[...SUPPORTED_FORMATS, ...MIME_TYPES].join(',')}
                             onChange={handleFileSelect}
                             style={{ display: 'none' }}
                         />
@@ -241,46 +295,70 @@ export default function UploadPage() {
                                         padding: '12px',
                                         background: '#f8fafc',
                                         borderRadius: '8px',
+                                        position: 'relative',
+                                        overflow: 'hidden',
                                     }}
                                 >
+                                    {/* Progress bar background */}
+                                    {(file.status === 'uploading' || file.status === 'processing') && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: 0,
+                                                top: 0,
+                                                bottom: 0,
+                                                width: `${file.progress}%`,
+                                                background: 'linear-gradient(90deg, rgba(139,92,246,0.1) 0%, rgba(139,92,246,0.2) 100%)',
+                                                transition: 'width 0.3s ease',
+                                                zIndex: 0,
+                                            }}
+                                        />
+                                    )}
+
                                     <div
                                         style={{
                                             width: '40px',
                                             height: '40px',
                                             borderRadius: '8px',
-                                            background: file.status === 'completed' ? '#d1fae5' : file.status === 'error' ? '#fee2e2' : '#e2e8f0',
+                                            background: file.status === 'completed' ? '#d1fae5'
+                                                : file.status === 'error' ? '#fee2e2'
+                                                    : file.status === 'processing' ? '#dbeafe'
+                                                        : file.status === 'uploading' ? '#ede9fe'
+                                                            : '#e2e8f0',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
+                                            zIndex: 1,
                                         }}
                                     >
-                                        {file.status === 'uploading' ? (
+                                        {(file.status === 'uploading' || file.status === 'processing') ? (
                                             <Loader2 size={18} color="#8B5CF6" className="dashboard-loader-icon" />
                                         ) : file.status === 'completed' ? (
                                             <CheckCircle size={18} color="#059669" />
                                         ) : file.status === 'error' ? (
                                             <AlertCircle size={18} color="#ef4444" />
                                         ) : (
-                                            <FileText size={18} color="#64748b" />
+                                            getFileIcon(file.file)
                                         )}
                                     </div>
 
-                                    <div style={{ flex: 1 }}>
+                                    <div style={{ flex: 1, zIndex: 1 }}>
                                         <div style={{ fontSize: '14px', fontWeight: 500, color: '#0f172a' }}>
                                             {file.file.name}
                                         </div>
                                         <div style={{ fontSize: '12px', color: '#64748b' }}>
                                             {file.status === 'pending' && 'En attente'}
-                                            {file.status === 'uploading' && 'Traitement en cours...'}
-                                            {file.status === 'completed' && 'CV importé avec succès'}
+                                            {file.status === 'uploading' && `Upload en cours... ${file.progress}%`}
+                                            {file.status === 'processing' && `OCR & Analyse IA... ${file.progress}%`}
+                                            {file.status === 'completed' && (file.candidateName ? `✓ ${file.candidateName} ajouté` : 'CV importé avec succès')}
                                             {file.status === 'error' && (file.error || 'Erreur')}
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1 }}>
                                         {file.status === 'completed' && file.candidateId && (
                                             <Link
-                                                href={`/cv-profiler/candidates/${file.candidateId}`}
+                                                href="/cv-profiler/candidates"
                                                 style={{
                                                     padding: '6px 12px',
                                                     background: '#ede9fe',
@@ -314,7 +392,7 @@ export default function UploadPage() {
                         </div>
 
                         {/* Upload Button */}
-                        {files.some(f => f.status === 'pending') && (
+                        {pendingCount > 0 && (
                             <button
                                 onClick={uploadFiles}
                                 disabled={isUploading}
@@ -329,7 +407,7 @@ export default function UploadPage() {
                                 ) : (
                                     <>
                                         <Upload size={16} />
-                                        Importer {files.filter(f => f.status === 'pending').length} fichier{files.filter(f => f.status === 'pending').length > 1 ? 's' : ''}
+                                        Importer {pendingCount} fichier{pendingCount > 1 ? 's' : ''}
                                     </>
                                 )}
                             </button>
@@ -343,10 +421,10 @@ export default function UploadPage() {
                         💡 Conseils
                     </h3>
                     <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#92400e', lineHeight: 1.6 }}>
-                        <li>Les CVs au format PDF sont recommandés pour une meilleure extraction</li>
+                        <li>Tous les formats sont analysés par OCR (PaddleOCR) pour extraire le texte</li>
                         <li>L'IA extrait automatiquement les compétences, expériences et coordonnées</li>
-                        <li>Vous pouvez importer plusieurs fichiers à la fois</li>
-                        <li>Les candidats créés sont immédiatement disponibles dans votre liste</li>
+                        <li>Les images de CVs (photos, scans) sont parfaitement supportées</li>
+                        <li>Les candidats créés apparaissent immédiatement dans votre liste</li>
                     </ul>
                 </div>
             </div>
