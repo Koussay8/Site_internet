@@ -54,13 +54,16 @@ export default function PublicApplyPage() {
         }
     };
 
+    // Formats supportés par OCR
+    const ACCEPTED_FORMATS = '.pdf,.docx,.png,.jpg,.jpeg,.webp,.bmp,.tiff';
+    const ACCEPTED_MIMES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg', 'image/webp', 'image/bmp', 'image/tiff'];
+
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         const files = Array.from(e.dataTransfer.files);
         const cvFile = files.find(f =>
-            f.type === 'application/pdf' ||
-            f.name.endsWith('.pdf') ||
-            f.name.endsWith('.docx')
+            ACCEPTED_MIMES.includes(f.type) ||
+            f.name.match(/\.(pdf|docx|png|jpg|jpeg|webp|bmp|tiff)$/i)
         );
         if (cvFile) setCvFile(cvFile);
     }, []);
@@ -194,14 +197,14 @@ export default function PublicApplyPage() {
                                                     Glissez votre CV ou cliquez pour sélectionner
                                                 </p>
                                                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', margin: '4px 0 0' }}>
-                                                    PDF, DOCX acceptés
+                                                    PDF, DOCX, PNG, JPG acceptés
                                                 </p>
                                             </>
                                         )}
                                         <input
                                             id="cv-input"
                                             type="file"
-                                            accept=".pdf,.docx"
+                                            accept={ACCEPTED_FORMATS}
                                             onChange={(e) => setCvFile(e.target.files?.[0] || null)}
                                             style={{ display: 'none' }}
                                         />

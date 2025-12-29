@@ -12,7 +12,12 @@ import {
     Briefcase,
     CheckCircle,
     AlertTriangle,
+    UserPlus,
+    FolderPlus,
+    Trash2,
 } from 'lucide-react';
+import CandidateSelector from '@/components/cv-profiler/CandidateSelector';
+import JobSelector from '@/components/cv-profiler/JobSelector';
 
 interface Job {
     id: string;
@@ -57,6 +62,9 @@ export default function PlaygroundDetailPage() {
     const [optimalResult, setOptimalResult] = useState<OptimalResult | null>(null);
     const [showOptimalView, setShowOptimalView] = useState(false);
 
+    const [showCandidateSelector, setShowCandidateSelector] = useState(false);
+    const [showJobSelector, setShowJobSelector] = useState(false);
+
     useEffect(() => {
         loadPlayground();
     }, [playgroundId]);
@@ -70,6 +78,8 @@ export default function PlaygroundDetailPage() {
             if (response.ok) {
                 const data = await response.json();
                 setPlayground(data);
+                setCandidates(data.candidates || []);
+                setJobs(data.jobs || []);
             } else {
                 router.push('/cv-profiler/playgrounds');
             }
@@ -78,6 +88,45 @@ export default function PlaygroundDetailPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const updatePlayground = async (candidateIds: string[], jobIds: string[]) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/playgrounds/${playgroundId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ candidate_ids: candidateIds, job_ids: jobIds }),
+            });
+            loadPlayground();
+        } catch (error) {
+            console.error('Failed to update playground:', error);
+        }
+    };
+
+    const addCandidates = async (newCandidateIds: string[]) => {
+        const existingIds = playground?.candidate_ids || [];
+        const allIds = [...new Set([...existingIds, ...newCandidateIds])];
+        await updatePlayground(allIds, playground?.job_ids || []);
+    };
+
+    const addJobs = async (newJobIds: string[]) => {
+        const existingIds = playground?.job_ids || [];
+        const allIds = [...new Set([...existingIds, ...newJobIds])];
+        await updatePlayground(playground?.candidate_ids || [], allIds);
+    };
+
+    const removeCandidate = async (candidateId: string) => {
+        const remainingIds = (playground?.candidate_ids || []).filter((id: string) => id !== candidateId);
+        await updatePlayground(remainingIds, playground?.job_ids || []);
+    };
+
+    const removeJob = async (jobId: string) => {
+        const remainingIds = (playground?.job_ids || []).filter((id: string) => id !== jobId);
+        await updatePlayground(playground?.candidate_ids || [], remainingIds);
     };
 
     const calculateMatrix = async (optimize = false) => {
@@ -105,8 +154,8 @@ export default function PlaygroundDetailPage() {
                 const data = await response.json();
                 setMatrix(data.matrix || []);
                 setDetails(data.details || []);
-                setJobs(data.jobs || []);
-                setCandidates(data.candidates || []);
+                if (data.jobs) setJobs(data.jobs);
+                if (data.candidates) setCandidates(data.candidates);
                 if (data.optimal_assignment) {
                     setOptimalResult(data.optimal_assignment);
                     setShowOptimalView(true);
@@ -155,15 +204,14 @@ export default function PlaygroundDetailPage() {
                     <div>
                         <h1 className="cvp-header-title">{playground.name}</h1>
                         <p className="cvp-header-subtitle">
-                            {candidates.length || '?'} candidats • {jobs.length || '?'} postes
+                            {candidates.length} candidats • {jobs.length} postes
                         </p>
                     </div>
                 </div>
 
                 <div className="cvp-header-actions">
                     <button
-                        onClick={() => calculateMatrix(false)}
-                        disabled={isCalculating || isOptimizing}
+                        onClick={() => setShowCandidateSelector(true)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -177,17 +225,32 @@ export default function PlaygroundDetailPage() {
                             cursor: 'pointer',
                         }}
                     >
-                        {isCalculating ? (
-                            <Loader2 size={16} className="dashboard-loader-icon" />
-                        ) : (
-                            <Sparkles size={16} />
-                        )}
-                        Calculer matrice
+                        <UserPlus size={16} />
+                        + Candidats
+                    </button>
+
+                    <button
+                        onClick={() => setShowJobSelector(true)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            background: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <FolderPlus size={16} />
+                        + Postes
                     </button>
 
                     <button
                         onClick={() => calculateMatrix(true)}
-                        disabled={isCalculating || isOptimizing}
+                        disabled={isCalculating || isOptimizing || candidates.length === 0 || jobs.length === 0}
                         className="cvp-primary-btn"
                     >
                         {isOptimizing ? (
@@ -198,7 +261,7 @@ export default function PlaygroundDetailPage() {
                         ) : (
                             <>
                                 <Zap size={16} />
-                                Meilleure disposition
+                                Calcul Optimal
                             </>
                         )}
                     </button>
@@ -207,6 +270,95 @@ export default function PlaygroundDetailPage() {
 
             {/* Content */}
             <div className="cvp-content">
+                {/* Selection Panel */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                    {/* Candidates */}
+                    <div className="cvp-card">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Users size={16} color="#8B5CF6" />
+                                Candidats ({candidates.length})
+                            </h3>
+                            <button
+                                onClick={() => setShowCandidateSelector(true)}
+                                style={{ padding: '4px 8px', background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                                + Ajouter
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {candidates.map(c => (
+                                <div
+                                    key={c.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 10px',
+                                        background: '#f8fafc',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                    }}
+                                >
+                                    {c.name}
+                                    <button
+                                        onClick={() => removeCandidate(c.id)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#dc2626', display: 'flex' }}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            {candidates.length === 0 && (
+                                <span style={{ fontSize: '13px', color: '#64748b' }}>Aucun candidat ajouté</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Jobs */}
+                    <div className="cvp-card">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Briefcase size={16} color="#3B82F6" />
+                                Postes ({jobs.length})
+                            </h3>
+                            <button
+                                onClick={() => setShowJobSelector(true)}
+                                style={{ padding: '4px 8px', background: '#dbeafe', color: '#1e40af', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                                + Ajouter
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {jobs.map(j => (
+                                <div
+                                    key={j.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 10px',
+                                        background: '#f8fafc',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                    }}
+                                >
+                                    {j.title}
+                                    <button
+                                        onClick={() => removeJob(j.id)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#dc2626', display: 'flex' }}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            {jobs.length === 0 && (
+                                <span style={{ fontSize: '13px', color: '#64748b' }}>Aucun poste ajouté</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Optimal Assignment Result */}
                 {showOptimalView && optimalResult && (
                     <div className="cvp-card" style={{ marginBottom: '24px', background: '#f0fdf4', border: '1px solid #86efac' }}>
@@ -232,7 +384,6 @@ export default function PlaygroundDetailPage() {
                             </button>
                         </div>
 
-                        {/* Assignments */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginBottom: '16px' }}>
                             {optimalResult.assignments.map((assignment, i) => (
                                 <div
@@ -263,23 +414,18 @@ export default function PlaygroundDetailPage() {
                             ))}
                         </div>
 
-                        {/* Warnings */}
                         {(optimalResult.unassigned_candidates.length > 0 || optimalResult.unfilled_jobs.length > 0) && (
                             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                                 {optimalResult.unassigned_candidates.length > 0 && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#92400e' }}>
                                         <AlertTriangle size={14} />
-                                        <span>
-                                            {optimalResult.unassigned_candidates.length} candidat(s) non assigné(s)
-                                        </span>
+                                        <span>{optimalResult.unassigned_candidates.length} candidat(s) non assigné(s)</span>
                                     </div>
                                 )}
                                 {optimalResult.unfilled_jobs.length > 0 && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#92400e' }}>
                                         <AlertTriangle size={14} />
-                                        <span>
-                                            {optimalResult.unfilled_jobs.length} poste(s) non rempli(s)
-                                        </span>
+                                        <span>{optimalResult.unfilled_jobs.length} poste(s) non rempli(s)</span>
                                     </div>
                                 )}
                             </div>
@@ -290,9 +436,29 @@ export default function PlaygroundDetailPage() {
                 {/* Matrix */}
                 {matrix.length > 0 && jobs.length > 0 && candidates.length > 0 ? (
                     <div className="cvp-card" style={{ overflowX: 'auto' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', marginBottom: '16px' }}>
-                            Matrice de Compatibilité
-                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: 0 }}>
+                                Matrice de Compatibilité
+                            </h3>
+                            <button
+                                onClick={() => calculateMatrix(false)}
+                                disabled={isCalculating}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 12px',
+                                    background: '#f8fafc',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {isCalculating ? <Loader2 size={14} className="dashboard-loader-icon" /> : <Sparkles size={14} />}
+                                Recalculer
+                            </button>
+                        </div>
 
                         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '4px' }}>
                             <thead>
@@ -383,32 +549,45 @@ export default function PlaygroundDetailPage() {
                             </div>
                         </div>
                         <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
-                            Prêt à analyser
+                            {candidates.length === 0 && jobs.length === 0
+                                ? 'Ajoutez des candidats et des postes'
+                                : candidates.length === 0
+                                    ? 'Ajoutez des candidats'
+                                    : jobs.length === 0
+                                        ? 'Ajoutez des postes'
+                                        : 'Prêt à calculer'}
                         </h3>
                         <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>
-                            Ajoutez des candidats et des postes à ce playground, puis calculez la matrice de compatibilité
+                            {candidates.length > 0 && jobs.length > 0
+                                ? 'Cliquez sur "Calcul Optimal" pour générer la matrice'
+                                : 'Utilisez les boutons ci-dessus pour ajouter des éléments'}
                         </p>
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                            <button onClick={() => calculateMatrix(false)} disabled={isCalculating} className="cvp-primary-btn">
-                                <Sparkles size={16} />
-                                Calculer la matrice
+                        {candidates.length > 0 && jobs.length > 0 && (
+                            <button onClick={() => calculateMatrix(true)} disabled={isOptimizing} className="cvp-primary-btn">
+                                <Zap size={16} />
+                                Calcul Optimal
                             </button>
-                        </div>
+                        )}
                     </div>
                 )}
-
-                {/* Info */}
-                <div className="cvp-card" style={{ marginTop: '24px', background: '#eff6ff', border: '1px solid #bfdbfe' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#1e40af', margin: '0 0 8px 0' }}>
-                        ℹ️ Comment utiliser ce playground
-                    </h3>
-                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#1e40af', lineHeight: 1.8 }}>
-                        <li><strong>Matrice:</strong> Affiche le score de compatibilité entre chaque candidat et chaque poste</li>
-                        <li><strong>Meilleure disposition:</strong> L'IA trouve l'assignation optimale où chaque candidat a un seul poste</li>
-                        <li><strong>Contrainte:</strong> Un candidat ne peut être assigné qu'à un seul poste à la fois</li>
-                    </ul>
-                </div>
             </div>
+
+            {/* Modals */}
+            <CandidateSelector
+                isOpen={showCandidateSelector}
+                onClose={() => setShowCandidateSelector(false)}
+                onSelect={addCandidates}
+                excludeIds={playground?.candidate_ids || []}
+                title="Ajouter des candidats au playground"
+            />
+
+            <JobSelector
+                isOpen={showJobSelector}
+                onClose={() => setShowJobSelector(false)}
+                onSelect={addJobs}
+                excludeIds={playground?.job_ids || []}
+                title="Ajouter des postes au playground"
+            />
         </div>
     );
 }

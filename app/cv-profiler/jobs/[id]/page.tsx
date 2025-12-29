@@ -13,7 +13,9 @@ import {
     ChevronUp,
     Plus,
     Trash2,
+    UserPlus,
 } from 'lucide-react';
+import CandidateSelector from '@/components/cv-profiler/CandidateSelector';
 
 interface Job {
     id: string;
@@ -21,6 +23,21 @@ interface Job {
     description: string;
     required_skills: string[];
     min_experience: number;
+}
+
+interface JobCandidate {
+    id: string;
+    match_score: number;
+    matched_skills: string[];
+    missing_skills: string[];
+    explanation: string;
+    candidate: {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+        skills: string[];
+    };
 }
 
 interface CandidateMatch {
@@ -42,14 +59,18 @@ export default function JobDetailPage() {
     const jobId = params.id as string;
 
     const [job, setJob] = useState<Job | null>(null);
+    const [jobCandidates, setJobCandidates] = useState<JobCandidate[]>([]);
     const [matches, setMatches] = useState<CandidateMatch[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCalculating, setIsCalculating] = useState(false);
     const [filterAll, setFilterAll] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [showSelector, setShowSelector] = useState(false);
+    const [activeTab, setActiveTab] = useState<'associated' | 'matching'>('associated');
 
     useEffect(() => {
         loadJob();
+        loadJobCandidates();
     }, [jobId]);
 
     const loadJob = async () => {
@@ -68,6 +89,57 @@ export default function JobDetailPage() {
             console.error('Failed to load job:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadJobCandidates = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/jobs/${jobId}/candidates`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setJobCandidates(data || []);
+            }
+        } catch (error) {
+            console.error('Failed to load job candidates:', error);
+        }
+    };
+
+    const addCandidates = async (candidateIds: string[]) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/jobs/${jobId}/candidates`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ candidateIds }),
+            });
+            if (response.ok) {
+                loadJobCandidates();
+            }
+        } catch (error) {
+            console.error('Failed to add candidates:', error);
+        }
+    };
+
+    const removeCandidate = async (candidateId: string) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/jobs/${jobId}/candidates`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ candidateId }),
+            });
+            loadJobCandidates();
+        } catch (error) {
+            console.error('Failed to remove candidate:', error);
         }
     };
 
@@ -92,6 +164,7 @@ export default function JobDetailPage() {
             if (response.ok) {
                 const data = await response.json();
                 setMatches(data.results || []);
+                setActiveTab('matching');
             }
         } catch (error) {
             console.error('Failed to calculate matching:', error);
@@ -115,9 +188,9 @@ export default function JobDetailPage() {
         );
     }
 
-    if (!job) {
-        return null;
-    }
+    if (!job) return null;
+
+    const excludedCandidateIds = jobCandidates.map(jc => jc.candidate?.id).filter(Boolean);
 
     return (
         <div style={{ minHeight: '100vh', background: '#FAFAF9' }}>
@@ -137,23 +210,23 @@ export default function JobDetailPage() {
 
                 <div className="cvp-header-actions">
                     <button
-                        onClick={() => setFilterAll(!filterAll)}
+                        onClick={() => setShowSelector(true)}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
                             padding: '10px 16px',
-                            background: filterAll ? '#ede9fe' : 'white',
+                            background: 'white',
                             border: '1px solid #e2e8f0',
                             borderRadius: '8px',
                             fontSize: '14px',
                             fontWeight: 500,
-                            color: filterAll ? '#7c3aed' : '#374151',
+                            color: '#374151',
                             cursor: 'pointer',
                         }}
                     >
-                        <Filter size={16} />
-                        {filterAll ? 'Tous les candidats' : 'Candidats assignés'}
+                        <UserPlus size={16} />
+                        Ajouter des candidats
                     </button>
 
                     <button
@@ -213,40 +286,59 @@ export default function JobDetailPage() {
                     )}
                 </div>
 
-                {/* Matching Results */}
-                {matches.length > 0 ? (
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <button
+                        onClick={() => setActiveTab('associated')}
+                        style={{
+                            padding: '10px 20px',
+                            background: activeTab === 'associated' ? '#8B5CF6' : 'white',
+                            color: activeTab === 'associated' ? 'white' : '#374151',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <Users size={16} style={{ marginRight: '8px', display: 'inline' }} />
+                        Candidats associés ({jobCandidates.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('matching')}
+                        style={{
+                            padding: '10px 20px',
+                            background: activeTab === 'matching' ? '#8B5CF6' : 'white',
+                            color: activeTab === 'matching' ? 'white' : '#374151',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        <Sparkles size={16} style={{ marginRight: '8px', display: 'inline' }} />
+                        Matching IA ({matches.length})
+                    </button>
+                </div>
+
+                {/* Associated Candidates Tab */}
+                {activeTab === 'associated' && (
                     <div className="cvp-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: 0 }}>
-                                Classement par compatibilité ({matches.length})
-                            </h3>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {matches.map((match, index) => {
-                                const colors = getScoreColor(match.score.value);
-                                const isExpanded = expandedId === match.candidate_id;
-
-                                return (
-                                    <div
-                                        key={match.candidate_id}
-                                        style={{
-                                            background: '#f8fafc',
-                                            borderRadius: '10px',
-                                            overflow: 'hidden',
-                                        }}
-                                    >
+                        {jobCandidates.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {jobCandidates.map((jc, index) => {
+                                    const colors = getScoreColor(jc.match_score || 0);
+                                    return (
                                         <div
-                                            onClick={() => setExpandedId(isExpanded ? null : match.candidate_id)}
+                                            key={jc.id}
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '12px',
                                                 padding: '14px 16px',
-                                                cursor: 'pointer',
+                                                background: '#f8fafc',
+                                                borderRadius: '10px',
                                             }}
                                         >
-                                            {/* Rank */}
                                             <div
                                                 style={{
                                                     width: '28px',
@@ -264,17 +356,15 @@ export default function JobDetailPage() {
                                                 {index + 1}
                                             </div>
 
-                                            {/* Info */}
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
-                                                    {match.candidate_name}
+                                                    {jc.candidate?.name || 'N/A'}
                                                 </div>
                                                 <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                                    {match.candidate_email}
+                                                    {jc.candidate?.email}
                                                 </div>
                                             </div>
 
-                                            {/* Score */}
                                             <div
                                                 style={{
                                                     padding: '6px 14px',
@@ -285,78 +375,188 @@ export default function JobDetailPage() {
                                                     fontWeight: 700,
                                                 }}
                                             >
-                                                {match.score.value}%
+                                                {jc.match_score || 0}%
                                             </div>
 
-                                            {isExpanded ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+                                            <button
+                                                onClick={() => removeCandidate(jc.candidate?.id)}
+                                                style={{
+                                                    padding: '8px',
+                                                    background: '#fee2e2',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    color: '#dc2626',
+                                                }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
-
-                                        {/* Expanded Details */}
-                                        {isExpanded && (
-                                            <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e2e8f0' }}>
-                                                <p style={{ fontSize: '13px', color: '#374151', margin: '12px 0' }}>
-                                                    {match.score.explanation}
-                                                </p>
-
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                                    {match.score.matchedSkills.length > 0 && (
-                                                        <div>
-                                                            <div style={{ fontSize: '12px', fontWeight: 500, color: '#059669', marginBottom: '6px' }}>
-                                                                ✓ Compétences matchées
-                                                            </div>
-                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                                                {match.score.matchedSkills.map((s, i) => (
-                                                                    <span key={i} style={{ padding: '2px 8px', background: '#dcfce7', color: '#166534', fontSize: '11px', borderRadius: '4px' }}>
-                                                                        {s}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {match.score.missingSkills.length > 0 && (
-                                                        <div>
-                                                            <div style={{ fontSize: '12px', fontWeight: 500, color: '#dc2626', marginBottom: '6px' }}>
-                                                                ✗ Compétences manquantes
-                                                            </div>
-                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                                                {match.score.missingSkills.map((s, i) => (
-                                                                    <span key={i} style={{ padding: '2px 8px', background: '#fee2e2', color: '#991b1b', fontSize: '11px', borderRadius: '4px' }}>
-                                                                        {s}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '48px' }}>
+                                <div className="cvp-stat-icon violet" style={{ margin: '0 auto 16px auto' }}>
+                                    <Users size={24} />
+                                </div>
+                                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
+                                    Aucun candidat associé
+                                </h3>
+                                <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>
+                                    Ajoutez des candidats pour ce poste
+                                </p>
+                                <button onClick={() => setShowSelector(true)} className="cvp-primary-btn">
+                                    <UserPlus size={16} />
+                                    Ajouter des candidats
+                                </button>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="cvp-card" style={{ textAlign: 'center', padding: '48px' }}>
-                        <div className="cvp-stat-icon violet" style={{ margin: '0 auto 16px auto' }}>
-                            <Users size={24} />
-                        </div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
-                            Aucun résultat
-                        </h3>
-                        <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>
-                            {filterAll
-                                ? "Cliquez sur 'Calculer compatibilité' pour analyser tous vos candidats"
-                                : "Aucun candidat assigné à ce poste ou cliquez sur 'Calculer compatibilité'"
-                            }
-                        </p>
-                        <button onClick={calculateMatching} disabled={isCalculating} className="cvp-primary-btn">
-                            <Sparkles size={16} />
-                            Calculer la compatibilité
-                        </button>
+                )}
+
+                {/* Matching Tab */}
+                {activeTab === 'matching' && (
+                    <div className="cvp-card">
+                        {matches.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {matches.map((match, index) => {
+                                    const colors = getScoreColor(match.score.value);
+                                    const isExpanded = expandedId === match.candidate_id;
+
+                                    return (
+                                        <div
+                                            key={match.candidate_id}
+                                            style={{
+                                                background: '#f8fafc',
+                                                borderRadius: '10px',
+                                                overflow: 'hidden',
+                                            }}
+                                        >
+                                            <div
+                                                onClick={() => setExpandedId(isExpanded ? null : match.candidate_id)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    padding: '14px 16px',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        borderRadius: '8px',
+                                                        background: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#d97706' : '#e2e8f0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '12px',
+                                                        fontWeight: 700,
+                                                        color: index < 3 ? 'white' : '#64748b',
+                                                    }}
+                                                >
+                                                    {index + 1}
+                                                </div>
+
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+                                                        {match.candidate_name}
+                                                    </div>
+                                                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                        {match.candidate_email}
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        padding: '6px 14px',
+                                                        background: colors.bg,
+                                                        color: colors.text,
+                                                        borderRadius: '8px',
+                                                        fontSize: '14px',
+                                                        fontWeight: 700,
+                                                    }}
+                                                >
+                                                    {match.score.value}%
+                                                </div>
+
+                                                {isExpanded ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div style={{ padding: '0 16px 16px', borderTop: '1px solid #e2e8f0' }}>
+                                                    <p style={{ fontSize: '13px', color: '#374151', margin: '12px 0' }}>
+                                                        {match.score.explanation}
+                                                    </p>
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                                        {match.score.matchedSkills.length > 0 && (
+                                                            <div>
+                                                                <div style={{ fontSize: '12px', fontWeight: 500, color: '#059669', marginBottom: '6px' }}>
+                                                                    ✓ Compétences matchées
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                    {match.score.matchedSkills.map((s, i) => (
+                                                                        <span key={i} style={{ padding: '2px 8px', background: '#dcfce7', color: '#166534', fontSize: '11px', borderRadius: '4px' }}>
+                                                                            {s}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {match.score.missingSkills.length > 0 && (
+                                                            <div>
+                                                                <div style={{ fontSize: '12px', fontWeight: 500, color: '#dc2626', marginBottom: '6px' }}>
+                                                                    ✗ Compétences manquantes
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                    {match.score.missingSkills.map((s, i) => (
+                                                                        <span key={i} style={{ padding: '2px 8px', background: '#fee2e2', color: '#991b1b', fontSize: '11px', borderRadius: '4px' }}>
+                                                                            {s}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '48px' }}>
+                                <div className="cvp-stat-icon violet" style={{ margin: '0 auto 16px auto' }}>
+                                    <Sparkles size={24} />
+                                </div>
+                                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 8px 0' }}>
+                                    Aucun résultat de matching
+                                </h3>
+                                <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 16px 0' }}>
+                                    Cliquez sur &quot;Calculer compatibilité&quot; pour analyser tous les candidats
+                                </p>
+                                <button onClick={calculateMatching} disabled={isCalculating} className="cvp-primary-btn">
+                                    <Sparkles size={16} />
+                                    Calculer la compatibilité
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
+
+            {/* Candidate Selector Modal */}
+            <CandidateSelector
+                isOpen={showSelector}
+                onClose={() => setShowSelector(false)}
+                onSelect={addCandidates}
+                excludeIds={excludedCandidateIds}
+                title="Ajouter des candidats à ce poste"
+            />
         </div>
     );
 }
