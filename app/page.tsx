@@ -94,6 +94,35 @@ export default function Home() {
         <div className="container hero-content">
           <span className="badge">🚀 Déjà 47+ entreprises accompagnées</span>
           <h1 className="hero-title">L&apos;IA au service de votre <br /><Typewriter text="Croissance" className="text-gradient" /></h1>
+          
+          {/* AIVoiceAgent Promo Banner */}
+          <a 
+            href="https://aivoicedemo.vercel.app" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="voice-agent-promo"
+          >
+            <div className="promo-glow"></div>
+            <div className="promo-content">
+              <div className="promo-icon-wrapper">
+                <span className="promo-icon">📞</span>
+                <span className="promo-pulse"></span>
+              </div>
+              <div className="promo-text">
+                <span className="promo-badge">🔥 Notre Best-Seller</span>
+                <p className="promo-title">
+                  <strong>Assistante Vocale IA 24h/7</strong> — Une voix chaleureuse qui ne dort jamais
+                </p>
+                <p className="promo-features">
+                  Choisissez, personnalisez ou <span className="highlight">dupliquez votre propre voix</span> • Paramétrage complet
+                </p>
+              </div>
+              <span className="promo-cta">
+                Essayer la Démo <span className="arrow">→</span>
+              </span>
+            </div>
+          </a>
+
           <p className="hero-subtitle">Transformez vos opérations avec des automatisations intelligentes. Nous construisons le futur de votre entreprise, aujourd&apos;hui.</p>
           <div className="hero-btns">
             <a href="#contact" className="btn btn-primary">Démarrer le Projet</a>
