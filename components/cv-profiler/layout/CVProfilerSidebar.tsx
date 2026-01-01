@@ -19,6 +19,11 @@ interface User {
     company_name?: string;
 }
 
+interface CVProfilerSidebarProps {
+    isDemo?: boolean;
+}
+
+// Navigation - always uses /cv-profiler (demo mode is now integrated in the main app)
 const navigation = [
     { name: 'Dashboard', href: '/cv-profiler', icon: LayoutDashboard },
     { name: 'Candidats', href: '/cv-profiler/candidates', icon: Users },
@@ -27,7 +32,7 @@ const navigation = [
     { name: 'Formulaires', href: '/cv-profiler/forms', icon: FileText },
 ];
 
-export default function CVProfilerSidebar() {
+export default function CVProfilerSidebar({ isDemo = false }: CVProfilerSidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
@@ -61,7 +66,7 @@ export default function CVProfilerSidebar() {
             {/* Bouton Import CVs */}
             <Link href="/cv-profiler/upload" className="cvp-import-btn">
                 <Upload size={16} />
-                Importer des CVs
+                {isDemo ? 'Importer un CV (Démo)' : 'Importer des CVs'}
             </Link>
 
             {/* Navigation */}

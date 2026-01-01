@@ -1,40 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { verifyAuth, unauthorizedResponse } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
-
-// Helper to verify JWT and get user
-async function verifyAuth(request: NextRequest) {
-    const authHeader = request.headers.get('Authorization');
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return null;
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
-        return payload;
-    } catch {
-        return null;
-    }
-}
 
 // GET - Liste tous les candidats de l'utilisateur
 export async function GET(request: NextRequest) {
     try {
         const user = await verifyAuth(request);
-        if (!user) {
-            return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-        }
+        if (!user) return unauthorizedResponse();
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search');
-        const jobId = searchParams.get('job_id');
         const sortBy = searchParams.get('sort_by') || 'created_at';
 
         let query = supabase
@@ -42,12 +17,10 @@ export async function GET(request: NextRequest) {
             .select('*')
             .eq('user_id', user.userId);
 
-        // Filtres
         if (search) {
             query = query.ilike('name', `%${search}%`);
         }
 
-        // Tri
         if (sortBy === 'match_score') {
             query = query.order('match_score', { ascending: false, nullsFirst: false });
         } else {
@@ -73,9 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const user = await verifyAuth(request);
-        if (!user) {
-            return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-        }
+        if (!user) return unauthorizedResponse();
 
         const body = await request.json();
 

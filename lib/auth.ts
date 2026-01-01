@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
-
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
+import { supabase } from '@/lib/supabase';
 
 export interface AuthUser {
     userId: string;
@@ -16,15 +14,30 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser | null>
         }
 
         const token = authHeader.substring(7);
-        const { payload } = await jwtVerify(token, JWT_SECRET);
 
-        if (!payload.userId || !payload.email) {
+        // Verify token using Supabase
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            console.error('Auth verification failed:', error?.message);
+            return null;
+        }
+
+        // Get client data from clients table
+        const { data: client } = await supabase
+            .from('clients')
+            .select('id, email')
+            .eq('auth_uid', user.id)
+            .single();
+
+        if (!client) {
+            console.error('Client not found for auth_uid:', user.id);
             return null;
         }
 
         return {
-            userId: payload.userId as string,
-            email: payload.email as string,
+            userId: client.id,
+            email: client.email,
         };
     } catch (error) {
         console.error('Auth verification failed:', error);

@@ -13,15 +13,16 @@ export default function Chatbot() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [hasGreeted, setHasGreeted] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Welcome message - runs only once on mount
+    // Welcome message - only when chat is opened for the first time
     useEffect(() => {
-        if (messages.length === 0) {
+        if (isOpen && !hasGreeted && messages.length === 0) {
+            setHasGreeted(true);
             simulateTyping("Bonjour ! Je suis Nova, votre conseillère IA. Quel est votre secteur d'activité ?");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isOpen, hasGreeted, messages.length]);
 
     const simulateTyping = (text: string) => {
         let index = 0;
@@ -126,8 +127,7 @@ export default function Chatbot() {
 
             <div id="chatbot-container" className={isOpen ? '' : 'chatbot-hidden'}>
                 <div className="chatbot-header">
-                    <span>🤖 Assistant NovaSolutions</span>
-                    <small>Trouvez la solution IA parfaite pour vous</small>
+                    <span style={{ fontWeight: 700 }}>Nova<span style={{ color: '#a78bfa' }}>Solutions</span></span>
                 </div>
 
                 <div id="chatbot-messages">

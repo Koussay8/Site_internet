@@ -1,12 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Chatbot from '@/components/Chatbot';
 import Typewriter from '@/components/Typewriter';
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   // Scroll to top on page load/refresh
   useEffect(() => {
@@ -77,7 +88,13 @@ export default function Home() {
               <li><a href="#services" onClick={() => setMobileMenuOpen(false)}>Services</a></li>
               <li><a href="#about" onClick={() => setMobileMenuOpen(false)}>À propos</a></li>
               <li><a href="#contact" className="btn btn-outline nav-btn" onClick={() => setMobileMenuOpen(false)}>Contact</a></li>
-              <li><a href="/login" className="btn btn-primary nav-btn" onClick={() => setMobileMenuOpen(false)}>Se Connecter</a></li>
+              <li>
+                {isLoggedIn ? (
+                  <Link href="/dashboard" className="btn btn-primary nav-btn" onClick={() => setMobileMenuOpen(false)}>Mon Dashboard</Link>
+                ) : (
+                  <Link href="/login" className="btn btn-primary nav-btn" onClick={() => setMobileMenuOpen(false)}>Se Connecter</Link>
+                )}
+              </li>
             </ul>
           </nav>
           <div className={`hamburger ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -94,11 +111,11 @@ export default function Home() {
         <div className="container hero-content">
           <span className="badge">🚀 Déjà 47+ entreprises accompagnées</span>
           <h1 className="hero-title">L&apos;IA au service de votre <br /><Typewriter text="Croissance" className="text-gradient" /></h1>
-          
+
           {/* AIVoiceAgent Promo Banner */}
-          <a 
-            href="https://aivoicedemo.vercel.app" 
-            target="_blank" 
+          <a
+            href="https://aivoicedemo.vercel.app"
+            target="_blank"
             rel="noopener noreferrer"
             className="voice-agent-promo"
           >
@@ -114,7 +131,7 @@ export default function Home() {
                   <strong>Assistante Vocale IA 24h/7</strong> — Une voix chaleureuse qui ne dort jamais
                 </p>
                 <p className="promo-features">
-                  Choisissez, personnalisez ou <span className="highlight">dupliquez votre propre voix</span> • Paramétrage complet
+                  <span className="highlight">Déployée sur votre numéro en quelques minutes</span> • Aucune configuration de votre part • On s'occupe de tout
                 </p>
               </div>
               <span className="promo-cta">
@@ -153,39 +170,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Agents Section */}
+      {/* Services IA Section */}
       <section id="agents" className="section-padding">
         <div className="container">
           <div className="section-title-wrap">
-            <span className="section-subtitle">Nos Produits</span>
-            <h2 className="section-title">Agents <span className="text-gradient">IA</span> Prêts à l&apos;Emploi</h2>
+            <span className="section-subtitle">Nos Solutions IA</span>
+            <h2 className="section-title">Automatisez & <span className="text-gradient">Développez</span></h2>
             <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto' }}>14 solutions clé en main, déployées en 2-4 semaines, pour transformer votre activité.</p>
           </div>
 
           <div className="agents-grid">
             {[
-              { icon: '📞', title: 'Agent de Qualification & RDV 24/7', domain: 'Santé • Immobilier • Services', desc: 'Qualifie vos prospects et prend des RDV automatiquement, même à 3h du matin.' },
-              { icon: '🎙️', title: 'Assistant Vocal Mains Libres', domain: 'Artisans • Couvreurs • Électriciens', desc: 'Répond au téléphone quand vous êtes sur un chantier. Plus jamais d\'appel manqué.' },
-              { icon: '☀️', title: 'Calculateur Éligibilité & Devis IA', domain: 'Solaire • Rénovation Énergétique', desc: 'Pré-qualifie les clients et génère des devis. Ne transmettez que les dossiers finançables.' },
-              { icon: '💬', title: 'Agent WhatsApp Commande B2B', domain: 'Grossistes • Fournisseurs • Logistique', desc: 'Interprète les messages vocaux et génère le bon de commande automatiquement.' },
-              { icon: '🏠', title: 'Assistant Immo / Locataire IA', domain: 'Agences • Syndics • Gestionnaires', desc: 'Traite les questions récurrentes et qualifie les dossiers avant la première visite.' },
-              { icon: '✍️', title: 'Générateur Contenu & SEO Local', domain: 'Avocats • Notaires • Instituts de soin', desc: 'Rédige des articles SEO optimisés sans que vous n\'écriviez une seule ligne.' },
-              { icon: '🎨', title: 'Module Simulation Immersive IA', domain: 'Paysagistes • Piscinistes • Architectes', desc: 'Visualisez le projet final à partir d\'une simple photo.' },
-              { icon: '🎯', title: 'Prospecteur Automatisé B2B', domain: 'Nettoyage Industriel • Travaux Publics', desc: 'Messages ultra-personnalisés aux décideurs. Idéal pour les contrats récurrents.' },
-              { icon: '📄', title: 'Agent de Profilage de CVs', domain: 'RH • Recrutement', desc: 'Analyse automatique des CVs, scoring des candidats, matching avec les postes ouverts.' },
-              { icon: '🎤', title: 'Transcription & Résumé Réunions', domain: 'Consulting • Management', desc: 'Transcription audio automatique + résumés intelligents et points d\'action.' },
-              { icon: '📝', title: 'Comptes Rendus Automatiques Calls', domain: 'Consulting • Vente', desc: 'Génération automatique de comptes rendus après chaque appel téléphonique ou visio.' },
-              { icon: '🤖', title: 'Chatbot IA Site Web', domain: 'E-commerce • SaaS • Services', desc: 'Assistant virtuel 24/7 pour répondre aux visiteurs et qualifier les leads.' },
-              { icon: '📧', title: 'Automatisation Email IA', domain: 'Marketing • Vente', desc: 'Rédaction, personnalisation et envoi d\'emails automatisés par IA.' },
-              { icon: '📊', title: 'Analyse Documentaire IA', domain: 'Juridique • Comptabilité', desc: 'Extraction d\'informations, classification et synthèse de documents volumineux.' },
+              { icon: '👥', title: 'CV Profiler', desc: 'Recrutez 3x plus vite. L\'IA analyse, trie et matche vos CVs.' },
+              { icon: '📞', title: 'Agent Téléphonique IA 24/7', desc: 'Réceptionniste IA qui qualifie et prend des RDV. Dupliquez votre voix.' },
+              { icon: '💬', title: 'Chatbot IA Multi-Canal', desc: 'Sur votre site, Instagram, WhatsApp ou Messenger. 24h/24.' },
+              { icon: '📋', title: 'Qualification de Dossiers IA', desc: 'Qualifiez les dossiers avant la première visite. Vérification d\'éligibilité.' },
+              { icon: '📧', title: 'Emailing IA Personnalisé', desc: 'Emails hyper-personnalisés qui convertissent vraiment.' },
+              { icon: '🌐', title: 'Site Web Premium', desc: '1ère page Google. SEO optimisé, espace client, e-commerce.' },
+              { icon: '📅', title: 'Automatisation RDV & Tâches', desc: 'Libérez 10h par semaine. RDV, rappels, tâches automatiques.' },
+              { icon: '💰', title: 'Calculateur Éligibilité & Devis', desc: 'Pré-qualifiez et générez des devis en 30 secondes.' },
+              { icon: '🏠', title: 'Visualiseur 3D Architecture', desc: 'Plans en visites virtuelles époustouflantes.' },
+              { icon: '🎬', title: 'Vidéos Marketing IA 4K', desc: 'Pubs virales sans équipe vidéo. Technologies Veo.' },
+              { icon: '🔄', title: 'Simulation Avant/Après', desc: 'Simulations photo-réalistes. +40% de conversions.' },
+              { icon: '📱', title: 'Agent WhatsApp B2B', desc: 'Commandes WhatsApp → Bon de commande fournisseur.' },
+              { icon: '🎯', title: 'Génération Leads Ads', desc: 'Leads qualifiés via Meta, TikTok, Google Ads.' },
+              { icon: '📊', title: 'Analyse Data & IA', desc: 'Analyse poussée de vos données. Amélioration continue.' },
             ].map((agent, i) => (
               <div key={i} className="agent-card hidden-el">
                 <div className="agent-icon">{agent.icon}</div>
                 <h3>{agent.title}</h3>
-                <p className="agent-domain">{agent.domain}</p>
                 <p className="agent-desc">{agent.desc}</p>
               </div>
             ))}
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '48px' }}>
+            <a href="#contact" className="btn btn-primary" style={{ fontSize: '18px', padding: '16px 32px' }}>
+              🚀 Débloquer ces solutions
+            </a>
+            <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '14px' }}>Réservez un appel stratégique gratuit de 15 minutes</p>
           </div>
         </div>
       </section>

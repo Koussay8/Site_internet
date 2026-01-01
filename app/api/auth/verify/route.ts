@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 import { supabase } from '@/lib/supabase';
-
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
 
 export async function GET(request: NextRequest) {
     try {
@@ -20,19 +15,28 @@ export async function GET(request: NextRequest) {
 
         const token = authHeader.split(' ')[1];
 
-        // Verify JWT token
-        const { payload } = await jwtVerify(token, JWT_SECRET);
-        console.log('Verify: Token valid, userId:', payload.userId);
+        // Verify token with Supabase Auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-        // Get fresh client data from Supabase (table: clients, not users!)
-        const { data: client, error } = await supabase
+        if (authError || !user) {
+            console.log('Verify: Invalid token:', authError?.message);
+            return NextResponse.json(
+                { error: 'Token invalide ou expiré' },
+                { status: 401 }
+            );
+        }
+
+        console.log('Verify: Token valid, user id:', user.id);
+
+        // Get linked client data
+        const { data: client, error: clientError } = await supabase
             .from('clients')
             .select('id, email, company_name, applications, is_active, created_at')
-            .eq('id', payload.userId)
+            .eq('auth_uid', user.id)
             .single();
 
-        if (error || !client) {
-            console.log('Verify: Client not found:', error?.message);
+        if (clientError || !client) {
+            console.log('Verify: Client not found:', clientError?.message);
             return NextResponse.json(
                 { error: 'Utilisateur non trouvé' },
                 { status: 401 }

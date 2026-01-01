@@ -1855,7 +1855,7 @@ body:hover::after {
 .voice-agent-promo:hover {
     transform: translateY(-3px) scale(1.01);
     border-color: rgba(0, 240, 255, 0.5);
-    box-shadow: 
+    box-shadow:
         0 20px 40px rgba(0, 0, 0, 0.3),
         0 0 40px rgba(0, 240, 255, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1867,16 +1867,14 @@ body:hover::after {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: conic-gradient(
-        from 0deg at 50% 50%,
-        transparent 0deg,
-        rgba(0, 240, 255, 0.1) 60deg,
-        transparent 120deg,
-        rgba(112, 0, 255, 0.1) 180deg,
-        transparent 240deg,
-        rgba(0, 240, 255, 0.1) 300deg,
-        transparent 360deg
-    );
+    background: conic-gradient(from 0deg at 50% 50%,
+            transparent 0deg,
+            rgba(0, 240, 255, 0.1) 60deg,
+            transparent 120deg,
+            rgba(112, 0, 255, 0.1) 180deg,
+            transparent 240deg,
+            rgba(0, 240, 255, 0.1) 300deg,
+            transparent 360deg);
     animation: promo-rotate 8s linear infinite;
     opacity: 0;
     transition: opacity 0.4s;
@@ -1887,8 +1885,13 @@ body:hover::after {
 }
 
 @keyframes promo-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .promo-content {
@@ -1934,6 +1937,7 @@ body:hover::after {
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
     }
+
     100% {
         transform: translate(-50%, -50%) scale(1.5);
         opacity: 0;
@@ -2051,4 +2055,517 @@ body:hover::after {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
+}
+
+/* ============================================ */
+/* DASHBOARD - Additional Styles */
+/* ============================================ */
+
+/* Pending App Card */
+.dashboard-app-pending {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.dashboard-app-icon-pending {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4) !important;
+}
+
+.dashboard-app-badge-pending {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 12px;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 50px;
+    color: #fbbf24;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Available App Card */
+.dashboard-app-available {
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-app-available:hover {
+    border-style: solid;
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.dashboard-app-icon-available {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.2)) !important;
+    box-shadow: none !important;
+    border: 2px dashed rgba(139, 92, 246, 0.5);
+}
+
+.dashboard-app-badge-available {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 12px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 50px;
+    color: #a78bfa;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Add New Service Card */
+.dashboard-add-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 48px 32px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.dashboard-add-card:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-4px);
+}
+
+.dashboard-add-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 2px dashed rgba(139, 92, 246, 0.5);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a78bfa;
+    transition: all 0.3s;
+}
+
+.dashboard-add-card:hover .dashboard-add-icon {
+    background: rgba(139, 92, 246, 0.3);
+    border-style: solid;
+    transform: scale(1.1);
+}
+
+.dashboard-add-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.dashboard-add-card p {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Promo Card */
+.dashboard-app-promo {
+    position: relative;
+    border: 2px solid rgba(249, 115, 22, 0.5) !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(234, 88, 12, 0.05) 100%) !important;
+}
+
+.dashboard-promo-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    animation: pulse-promo 2s infinite;
+}
+
+@keyframes pulse-promo {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.dashboard-app-icon-promo {
+    background: linear-gradient(135deg, #f97316, #ea580c) !important;
+}
+
+/* Modal Overlay */
+.dashboard-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+}
+
+.dashboard-modal {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.dashboard-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.dashboard-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.dashboard-modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.dashboard-modal-subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0 0 24px 0;
+    text-align: center;
+}
+
+/* Modal Apps List */
+.dashboard-modal-apps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dashboard-modal-app {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.dashboard-modal-app:hover:not(.disabled) {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dashboard-modal-app.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* New modal app row layout */
+.dashboard-modal-app-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.dashboard-modal-app-info {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.dashboard-modal-app-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 4px 0;
+}
+
+.dashboard-modal-app-info p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.dashboard-modal-app-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: 60px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.dashboard-modal-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dashboard-modal-mini-btn.demo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.dashboard-modal-mini-btn.demo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-modal-mini-btn.request {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(124, 58, 237, 0.3));
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    color: white;
+}
+
+.dashboard-modal-mini-btn.request:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(124, 58, 237, 0.5));
+    transform: translateY(-2px);
+}
+
+.dashboard-modal-app-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.dashboard-modal-app h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 4px 0;
+}
+
+.dashboard-modal-app p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.pending-badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 4px 8px;
+    background: rgba(245, 158, 11, 0.2);
+    border-radius: 50px;
+    color: #fbbf24;
+}
+
+/* Modal App Header */
+.dashboard-modal-app-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.dashboard-modal-app-icon-large {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+}
+
+.dashboard-modal-app-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 8px 0;
+}
+
+.dashboard-modal-app-header p {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Modal Actions */
+.dashboard-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dashboard-modal-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.dashboard-modal-btn span {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dashboard-modal-btn small {
+    font-size: 12px;
+    opacity: 0.7;
+    display: block;
+    margin-top: 2px;
+}
+
+.dashboard-modal-btn.demo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+}
+
+.dashboard-modal-btn.demo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.dashboard-modal-btn.request {
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: white;
+}
+
+.dashboard-modal-btn.request:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.dashboard-modal-btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.dashboard-modal-btn-text span {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dashboard-modal-btn-text small {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* Modal Form */
+.dashboard-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dashboard-modal-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dashboard-modal-form label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-modal-form input,
+.dashboard-modal-form textarea {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.dashboard-modal-form input::placeholder,
+.dashboard-modal-form textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-modal-form input:focus,
+.dashboard-modal-form textarea:focus {
+    outline: none;
+    border-color: #8B5CF6;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-modal-submit {
+    margin-top: 8px;
+    padding: 14px;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dashboard-modal-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+}
+
+.dashboard-modal-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

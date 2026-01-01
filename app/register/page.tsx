@@ -4,38 +4,62 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [companyName, setCompanyName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
+        setSuccess('');
+
+        // Validate passwords match
+        if (password !== confirmPassword) {
+            setError('Les mots de passe ne correspondent pas');
+            setIsLoading(false);
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Le mot de passe doit contenir au moins 6 caractères');
+            setIsLoading(false);
+            return;
+        }
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, companyName }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Erreur de connexion');
+                throw new Error(data.error || 'Erreur lors de l\'inscription');
             }
 
-            // Store the JWT token
-            localStorage.setItem('auth_token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            // Force reload to update AuthProvider
-            window.location.href = '/dashboard';
+            if (data.needsConfirmation) {
+                setSuccess('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
+            } else {
+                // Auto-login if no confirmation needed
+                if (data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/dashboard';
+                } else {
+                    setSuccess('Compte créé ! Vous pouvez maintenant vous connecter.');
+                    setTimeout(() => router.push('/login'), 2000);
+                }
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Une erreur est survenue');
         } finally {
@@ -45,7 +69,7 @@ export default function LoginPage() {
 
     return (
         <div className="login-page">
-            {/* Background effects - same as homepage */}
+            {/* Background effects */}
             <div className="hero-bg"></div>
 
             <div className="login-container">
@@ -57,19 +81,21 @@ export default function LoginPage() {
                     Retour à l&apos;accueil
                 </Link>
 
-                {/* Login Card */}
+                {/* Register Card */}
                 <div className="login-card">
                     {/* Icon */}
                     <div className="login-icon">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="8.5" cy="7" r="4" />
+                            <line x1="20" y1="8" x2="20" y2="14" />
+                            <line x1="23" y1="11" x2="17" y2="11" />
                         </svg>
                     </div>
 
                     {/* Title */}
-                    <h1 className="login-title">Connexion</h1>
-                    <p className="login-subtitle">Accédez à votre espace client</p>
+                    <h1 className="login-title">Créer un compte</h1>
+                    <p className="login-subtitle">Rejoignez NovaSolutions</p>
 
                     {/* Error message */}
                     {error && (
@@ -83,11 +109,41 @@ export default function LoginPage() {
                         </div>
                     )}
 
+                    {/* Success message */}
+                    {success && (
+                        <div className="success-message">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                            {success}
+                        </div>
+                    )}
+
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="login-form">
+                        {/* Company Name */}
+                        <div className="form-group">
+                            <label htmlFor="companyName">Nom de l&apos;entreprise</label>
+                            <div className="input-wrapper">
+                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                    <polyline points="9 22 9 12 15 12 15 22" />
+                                </svg>
+                                <input
+                                    id="companyName"
+                                    type="text"
+                                    value={companyName}
+                                    onChange={(e) => setCompanyName(e.target.value)}
+                                    placeholder="Mon Entreprise"
+                                    autoComplete="organization"
+                                />
+                            </div>
+                        </div>
+
                         {/* Email */}
                         <div className="form-group">
-                            <label htmlFor="email">Email</label>
+                            <label htmlFor="email">Email *</label>
                             <div className="input-wrapper">
                                 <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -107,7 +163,7 @@ export default function LoginPage() {
 
                         {/* Password */}
                         <div className="form-group">
-                            <label htmlFor="password">Mot de passe</label>
+                            <label htmlFor="password">Mot de passe *</label>
                             <div className="input-wrapper">
                                 <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -120,7 +176,8 @@ export default function LoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     placeholder="••••••••"
-                                    autoComplete="current-password"
+                                    autoComplete="new-password"
+                                    minLength={6}
                                 />
                                 <button
                                     type="button"
@@ -141,6 +198,27 @@ export default function LoginPage() {
                                     )}
                                 </button>
                             </div>
+                            <span className="hint">Minimum 6 caractères</span>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div className="form-group">
+                            <label htmlFor="confirmPassword">Confirmer le mot de passe *</label>
+                            <div className="input-wrapper">
+                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <input
+                                    id="confirmPassword"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    placeholder="••••••••"
+                                    autoComplete="new-password"
+                                />
+                            </div>
                         </div>
 
                         {/* Submit button */}
@@ -155,17 +233,17 @@ export default function LoginPage() {
                                     <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                                     </svg>
-                                    Connexion en cours...
+                                    Création en cours...
                                 </>
                             ) : (
-                                'Se connecter'
+                                'Créer mon compte'
                             )}
                         </button>
                     </form>
 
-                    {/* Register link */}
-                    <p className="register-link">
-                        Pas encore de compte ? <Link href="/register">Créer un compte</Link>
+                    {/* Login link */}
+                    <p className="login-link">
+                        Déjà un compte ? <Link href="/login">Se connecter</Link>
                     </p>
 
                     {/* Footer */}
@@ -259,12 +337,12 @@ export default function LoginPage() {
                     width: 80px;
                     height: 80px;
                     margin: 0 auto 1.5rem;
-                    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+                    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
                     border-radius: 20px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+                    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
                 }
 
                 .login-icon svg {
@@ -298,10 +376,23 @@ export default function LoginPage() {
                     font-size: 0.9rem;
                 }
 
+                .success-message {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 1rem;
+                    background: rgba(16, 185, 129, 0.1);
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                    border-radius: 12px;
+                    color: #6ee7b7;
+                    margin-bottom: 1.5rem;
+                    font-size: 0.9rem;
+                }
+
                 .login-form {
                     display: flex;
                     flex-direction: column;
-                    gap: 1.5rem;
+                    gap: 1.25rem;
                 }
 
                 .form-group {
@@ -314,6 +405,11 @@ export default function LoginPage() {
                     font-size: 0.9rem;
                     font-weight: 500;
                     color: rgba(255, 255, 255, 0.9);
+                }
+
+                .hint {
+                    font-size: 0.75rem;
+                    color: rgba(255, 255, 255, 0.4);
                 }
 
                 .input-wrapper {
@@ -346,9 +442,9 @@ export default function LoginPage() {
 
                 .input-wrapper input:focus {
                     outline: none;
-                    border-color: #8b5cf6;
+                    border-color: #10b981;
                     background: rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
                 }
 
                 .toggle-password {
@@ -375,20 +471,20 @@ export default function LoginPage() {
                     to { transform: rotate(360deg); }
                 }
 
-                .register-link {
+                .login-link {
                     text-align: center;
                     color: rgba(255, 255, 255, 0.6);
                     font-size: 0.9rem;
                     margin-top: 1.5rem;
                 }
 
-                .register-link a {
-                    color: #8b5cf6;
+                .login-link a {
+                    color: #10b981;
                     text-decoration: none;
                     font-weight: 500;
                 }
 
-                .register-link a:hover {
+                .login-link a:hover {
                     text-decoration: underline;
                 }
 
@@ -396,7 +492,7 @@ export default function LoginPage() {
                     text-align: center;
                     color: rgba(255, 255, 255, 0.4);
                     font-size: 0.85rem;
-                    margin-top: 1rem;
+                    margin-top: 1.5rem;
                 }
 
                 @media (max-width: 640px) {
