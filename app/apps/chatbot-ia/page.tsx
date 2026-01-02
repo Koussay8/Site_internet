@@ -160,8 +160,9 @@ export default function ChatbotIAPage() {
                 setShowCreateForm(false);
                 await loadWidgets(user.id);
             } else {
-                const error = await response.json();
-                alert(error.error || 'Erreur de création');
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                alert(`Erreur: ${errorData.error}\nDétails: ${errorData.details || 'Aucun'}`);
             }
         } catch (error) {
             console.error('Create error:', error);

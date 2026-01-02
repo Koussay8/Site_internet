@@ -184,11 +184,15 @@ export async function POST(request: NextRequest) {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            return NextResponse.json({ error: error.message || 'Erreur base de données', details: error }, { status: 500 });
+        }
 
         return NextResponse.json({ widget: data });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error creating widget:', error);
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        return NextResponse.json({ error: 'Erreur serveur', details: errorMessage }, { status: 500 });
     }
 }
