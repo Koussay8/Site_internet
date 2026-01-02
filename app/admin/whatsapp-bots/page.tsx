@@ -16,9 +16,13 @@ import {
     CheckCircle,
     XCircle,
     AlertCircle,
-    Clock
+    Clock,
+    ChevronDown,
+    ChevronUp,
+    Settings
 } from 'lucide-react';
-import type { WhatsAppBot } from '@/types/whatsapp-bot';
+import type { WhatsAppBot, BotType } from '@/types/whatsapp-bot';
+import { BOT_TYPE_LABELS } from '@/types/whatsapp-bot';
 
 // Status configuration
 const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: React.ReactNode; label: string }> = {
@@ -36,7 +40,15 @@ export default function WhatsAppBotsPage() {
     const [bots, setBots] = useState<WhatsAppBot[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+
+    // Form state
     const [newBotName, setNewBotName] = useState('');
+    const [botType, setBotType] = useState<BotType>('invoice');
+    const [customPrompt, setCustomPrompt] = useState('');
+    const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [knowledgeText, setKnowledgeText] = useState('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
+
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState<string | null>(null);
     const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
@@ -122,20 +134,46 @@ export default function WhatsAppBotsPage() {
         return () => clearInterval(interval);
     }, [isAdmin, loadBots]);
 
-    // Create bot
+    // Create bot with options
     const createBot = async () => {
         if (!newBotName.trim()) return;
 
         setCreating(true);
         try {
+            // Parse knowledge text into entries
+            const knowledgeEntries = knowledgeText.trim()
+                ? knowledgeText.split('\n').filter(line => line.trim()).map(line => {
+                    const parts = line.split('|');
+                    if (parts.length >= 2) {
+                        return { question: parts[0].trim(), answer: parts[1].trim() };
+                    }
+                    return line.trim();
+                })
+                : [];
+
             const response = await fetch('/api/whatsapp-bots', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newBotName.trim() }),
+                body: JSON.stringify({
+                    name: newBotName.trim(),
+                    options: {
+                        botType,
+                        customPrompt: customPrompt.trim() || undefined,
+                        knowledge: knowledgeEntries.length > 0 ? knowledgeEntries : undefined,
+                        welcomeMessage: welcomeMessage.trim() || undefined,
+                        language: 'fr',
+                    },
+                }),
             });
 
             if (response.ok) {
+                // Reset form
                 setNewBotName('');
+                setBotType('invoice');
+                setCustomPrompt('');
+                setWelcomeMessage('');
+                setKnowledgeText('');
+                setShowAdvanced(false);
                 await loadBots();
             }
         } catch (error) {
@@ -362,16 +400,18 @@ export default function WhatsAppBotsPage() {
                     <h2 style={{ margin: '0 0 16px', fontSize: '18px', color: '#8B5CF6', fontWeight: 600 }}>
                         ➕ Créer un nouveau bot
                     </h2>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+
+                    {/* Row 1: Name + Type */}
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
                         <input
                             type="text"
                             value={newBotName}
                             onChange={(e) => setNewBotName(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && createBot()}
                             placeholder="Nom du bot (ex: Bot Client A)"
                             disabled={!backendAvailable}
                             style={{
-                                flex: 1,
+                                flex: 2,
+                                minWidth: '200px',
                                 padding: '12px 16px',
                                 background: 'rgba(255,255,255,0.05)',
                                 border: '1px solid rgba(255,255,255,0.2)',
@@ -381,27 +421,158 @@ export default function WhatsAppBotsPage() {
                                 outline: 'none',
                             }}
                         />
-                        <button
-                            onClick={createBot}
-                            disabled={creating || !newBotName.trim() || !backendAvailable}
+                        <select
+                            value={botType}
+                            onChange={(e) => setBotType(e.target.value as BotType)}
+                            disabled={!backendAvailable}
                             style={{
-                                padding: '12px 24px',
-                                background: creating || !backendAvailable ? '#4b5563' : '#8B5CF6',
-                                border: 'none',
+                                flex: 1,
+                                minWidth: '150px',
+                                padding: '12px 16px',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: '1px solid rgba(255,255,255,0.2)',
                                 borderRadius: '8px',
                                 color: 'white',
                                 fontSize: '14px',
-                                fontWeight: 600,
-                                cursor: creating || !backendAvailable ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
+                                outline: 'none',
+                                cursor: 'pointer',
                             }}
                         >
-                            {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                            Créer
-                        </button>
+                            {Object.entries(BOT_TYPE_LABELS).map(([key, label]) => (
+                                <option key={key} value={key} style={{ background: '#1e1b4b', color: 'white' }}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
+
+                    {/* Advanced Options Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 12px',
+                            background: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '8px',
+                            color: '#94a3b8',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            marginBottom: showAdvanced ? '12px' : '16px',
+                        }}
+                    >
+                        <Settings size={14} />
+                        Options avancées
+                        {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+
+                    {/* Advanced Options */}
+                    {showAdvanced && (
+                        <div style={{
+                            background: 'rgba(0,0,0,0.2)',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            marginBottom: '16px',
+                        }}>
+                            {/* Custom Prompt */}
+                            <div style={{ marginBottom: '12px' }}>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '13px', marginBottom: '6px' }}>
+                                    📝 Prompt personnalisé (optionnel)
+                                </label>
+                                <textarea
+                                    value={customPrompt}
+                                    onChange={(e) => setCustomPrompt(e.target.value)}
+                                    placeholder="Laissez vide pour utiliser le prompt par défaut du type de bot sélectionné"
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '80px',
+                                        padding: '12px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        fontSize: '13px',
+                                        outline: 'none',
+                                        resize: 'vertical',
+                                    }}
+                                />
+                            </div>
+
+                            {/* Welcome Message */}
+                            <div style={{ marginBottom: '12px' }}>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '13px', marginBottom: '6px' }}>
+                                    👋 Message d&apos;accueil (optionnel)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={welcomeMessage}
+                                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                                    placeholder="Ex: Bonjour ! Je suis votre assistant..."
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        fontSize: '13px',
+                                        outline: 'none',
+                                    }}
+                                />
+                            </div>
+
+                            {/* Knowledge Base */}
+                            <div>
+                                <label style={{ display: 'block', color: '#94a3b8', fontSize: '13px', marginBottom: '6px' }}>
+                                    📚 Base de connaissances (optionnel)
+                                </label>
+                                <textarea
+                                    value={knowledgeText}
+                                    onChange={(e) => setKnowledgeText(e.target.value)}
+                                    placeholder="Une entrée par ligne. Format: Question | Réponse&#10;Ex: Quels sont vos horaires ? | Du lundi au vendredi, 9h-18h"
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '80px',
+                                        padding: '12px',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        fontSize: '13px',
+                                        outline: 'none',
+                                        resize: 'vertical',
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Create Button */}
+                    <button
+                        onClick={createBot}
+                        disabled={creating || !newBotName.trim() || !backendAvailable}
+                        style={{
+                            width: '100%',
+                            padding: '14px 24px',
+                            background: creating || !backendAvailable ? '#4b5563' : 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            cursor: creating || !backendAvailable ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                        }}
+                    >
+                        {creating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        Créer le bot {BOT_TYPE_LABELS[botType]}
+                    </button>
                 </div>
 
                 {/* Info Box */}

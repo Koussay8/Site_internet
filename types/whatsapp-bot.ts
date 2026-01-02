@@ -2,14 +2,23 @@
  * Types for WhatsApp Bot application
  */
 
-export type BotStatus = 
-  | 'created' 
-  | 'connecting' 
-  | 'waiting_qr' 
-  | 'connected' 
-  | 'disconnected' 
-  | 'logged_out' 
+export type BotStatus =
+  | 'created'
+  | 'connecting'
+  | 'waiting_qr'
+  | 'connected'
+  | 'disconnected'
+  | 'logged_out'
   | 'error';
+
+export type BotType = 'invoice' | 'support' | 'appointment' | 'custom';
+
+export const BOT_TYPE_LABELS: Record<BotType, string> = {
+  invoice: '📄 Facturation',
+  support: '💬 Support Client',
+  appointment: '📅 Prise de RDV',
+  custom: '⚙️ Personnalisé',
+};
 
 export interface WhatsAppBot {
   id: string;
@@ -18,14 +27,18 @@ export interface WhatsAppBot {
   enabled: boolean;
   phoneNumber?: string;
   hasQR: boolean;
+  botType?: BotType;
 }
 
 export interface BotConfig {
   id: string;
   name: string;
+  botType?: BotType;
   status: BotStatus;
   enabled: boolean;
   autoStart: boolean;
+  language?: string;
+  welcomeMessage?: string;
   createdAt: string;
   settings: BotSettings;
 }
@@ -43,7 +56,10 @@ export interface BotSettings {
 
 export interface BotPrompt {
   system: string;
+  botType?: BotType;
+  language?: string;
   createdAt: string;
+  lastUpdated?: string;
 }
 
 export interface BotKnowledge {
@@ -53,7 +69,10 @@ export interface BotKnowledge {
 
 export interface KnowledgeEntry {
   id: string;
-  content: string;
+  question?: string;
+  answer?: string;
+  content?: string;
+  category?: string;
   createdAt: string;
 }
 
@@ -82,9 +101,18 @@ export interface BotFullConfig {
   };
 }
 
+export interface CreateBotOptions {
+  botType?: BotType;
+  customPrompt?: string;
+  knowledge?: Array<{ question: string; answer: string; category?: string } | string>;
+  welcomeMessage?: string;
+  language?: string;
+}
+
 export interface CreateBotRequest {
   name: string;
   settings?: Partial<BotSettings>;
+  options?: CreateBotOptions;
 }
 
 export interface EnableBotRequest {
@@ -97,3 +125,4 @@ export interface UpdateBotRequest {
   knowledge?: BotKnowledge;
   emails?: BotEmails;
 }
+
