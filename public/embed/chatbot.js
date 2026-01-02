@@ -281,16 +281,36 @@
     chatButton.addEventListener('click', toggleChat);
     chatClose.addEventListener('click', toggleChat);
 
-    // Add message to chat
-    function addMessage(text, role) {
+    // Add message to chat with optional typing animation
+    function addMessage(text, role, animate = true) {
         const msg = document.createElement('div');
         msg.className = `nova-message ${role}`;
-        msg.textContent = text;
         chatMessages.appendChild(msg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        if (role !== 'typing') {
-            conversationHistory.push({ role, content: text });
+        if (role === 'assistant' && animate && text.length > 0) {
+            // Typing animation for assistant
+            let index = 0;
+            const speed = 15; // ms per character
+
+            function typeChar() {
+                if (index < text.length) {
+                    msg.textContent += text.charAt(index);
+                    index++;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    setTimeout(typeChar, speed);
+                } else {
+                    // Animation complete, save to history
+                    conversationHistory.push({ role, content: text });
+                }
+            }
+            typeChar();
+        } else {
+            // Instant display for user messages
+            msg.textContent = text;
+            if (role !== 'typing') {
+                conversationHistory.push({ role, content: text });
+            }
         }
     }
 
