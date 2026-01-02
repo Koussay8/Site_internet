@@ -63,6 +63,15 @@ export default function ChatbotIAPage() {
     const [formKnowledge, setFormKnowledge] = useState('');
     const [formPreset, setFormPreset] = useState<'accueil' | 'support' | 'vente' | 'custom'>('accueil');
 
+    // Integration settings (optional)
+    const [showIntegrations, setShowIntegrations] = useState(false);
+    const [formOwnerEmail, setFormOwnerEmail] = useState('');
+    const [formSmtpHost, setFormSmtpHost] = useState('');
+    const [formSmtpUser, setFormSmtpUser] = useState('');
+    const [formSmtpPassword, setFormSmtpPassword] = useState('');
+    const [formGoogleCalendarId, setFormGoogleCalendarId] = useState('');
+    const [formGoogleSheetId, setFormGoogleSheetId] = useState('');
+
     // Check auth
     useEffect(() => {
         const token = localStorage.getItem('auth_token');
@@ -122,7 +131,14 @@ export default function ChatbotIAPage() {
                     welcomeMessage: formWelcomeMessage.trim(),
                     systemPrompt: formPrompt.trim(),
                     knowledgeBase: knowledgeEntries,
-                    functionPreset: formPreset
+                    functionPreset: formPreset,
+                    // Integration settings (optional)
+                    ownerEmail: formOwnerEmail.trim() || null,
+                    smtpHost: formSmtpHost.trim() || null,
+                    smtpUser: formSmtpUser.trim() || null,
+                    smtpPassword: formSmtpPassword || null,
+                    googleCalendarId: formGoogleCalendarId.trim() || null,
+                    googleSheetId: formGoogleSheetId.trim() || null,
                 })
             });
 
@@ -134,6 +150,13 @@ export default function ChatbotIAPage() {
                 setFormPrompt('');
                 setFormKnowledge('');
                 setFormPreset('accueil');
+                setShowIntegrations(false);
+                setFormOwnerEmail('');
+                setFormSmtpHost('');
+                setFormSmtpUser('');
+                setFormSmtpPassword('');
+                setFormGoogleCalendarId('');
+                setFormGoogleSheetId('');
                 setShowCreateForm(false);
                 await loadWidgets(user.id);
             } else {
@@ -558,6 +581,159 @@ export default function ChatbotIAPage() {
                                         resize: 'vertical',
                                     }}
                                 />
+                            </div>
+
+                            {/* Integration Settings (Collapsible) */}
+                            <div style={{ marginTop: '8px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowIntegrations(!showIntegrations)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        background: 'rgba(16, 185, 129, 0.1)',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        borderRadius: '8px',
+                                        color: '#6ee7b7',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                    }}
+                                >
+                                    <span>📅 Prise de RDV & Emails (optionnel)</span>
+                                    <span>{showIntegrations ? '▲' : '▼'}</span>
+                                </button>
+
+                                {showIntegrations && (
+                                    <div style={{
+                                        marginTop: '12px',
+                                        padding: '16px',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '12px',
+                                    }}>
+                                        <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>
+                                            💡 Remplissez ces champs pour activer la prise de RDV automatique et l&apos;envoi d&apos;emails de confirmation.
+                                        </p>
+
+                                        {/* Owner Email */}
+                                        <div>
+                                            <label style={{ display: 'block', color: '#6ee7b7', fontSize: '13px', marginBottom: '4px' }}>
+                                                📧 Votre email (pour recevoir les RDV)
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={formOwnerEmail}
+                                                onChange={e => setFormOwnerEmail(e.target.value)}
+                                                placeholder="votre@email.com"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '6px',
+                                                    color: 'white',
+                                                    fontSize: '13px',
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* SMTP Settings */}
+                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                                            <p style={{ color: '#a78bfa', fontSize: '12px', margin: '0 0 8px 0' }}>
+                                                📤 Configuration SMTP (pour envoyer les emails)
+                                            </p>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                                <input
+                                                    type="text"
+                                                    value={formSmtpHost}
+                                                    onChange={e => setFormSmtpHost(e.target.value)}
+                                                    placeholder="smtp.gmail.com"
+                                                    style={{
+                                                        padding: '10px',
+                                                        background: 'rgba(255,255,255,0.05)',
+                                                        border: '1px solid rgba(255,255,255,0.2)',
+                                                        borderRadius: '6px',
+                                                        color: 'white',
+                                                        fontSize: '13px',
+                                                    }}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={formSmtpUser}
+                                                    onChange={e => setFormSmtpUser(e.target.value)}
+                                                    placeholder="Utilisateur SMTP"
+                                                    style={{
+                                                        padding: '10px',
+                                                        background: 'rgba(255,255,255,0.05)',
+                                                        border: '1px solid rgba(255,255,255,0.2)',
+                                                        borderRadius: '6px',
+                                                        color: 'white',
+                                                        fontSize: '13px',
+                                                    }}
+                                                />
+                                            </div>
+                                            <input
+                                                type="password"
+                                                value={formSmtpPassword}
+                                                onChange={e => setFormSmtpPassword(e.target.value)}
+                                                placeholder="Mot de passe SMTP (sera chiffré)"
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: '8px',
+                                                    padding: '10px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '6px',
+                                                    color: 'white',
+                                                    fontSize: '13px',
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Google Integration */}
+                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                                            <p style={{ color: '#a78bfa', fontSize: '12px', margin: '0 0 8px 0' }}>
+                                                📊 Google Calendar & Sheets (IDs)
+                                            </p>
+                                            <input
+                                                type="text"
+                                                value={formGoogleCalendarId}
+                                                onChange={e => setFormGoogleCalendarId(e.target.value)}
+                                                placeholder="ID Google Calendar (ex: xxx@group.calendar.google.com)"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '6px',
+                                                    color: 'white',
+                                                    fontSize: '13px',
+                                                }}
+                                            />
+                                            <input
+                                                type="text"
+                                                value={formGoogleSheetId}
+                                                onChange={e => setFormGoogleSheetId(e.target.value)}
+                                                placeholder="ID Google Sheet (dans l'URL du sheet)"
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: '8px',
+                                                    padding: '10px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '6px',
+                                                    color: 'white',
+                                                    fontSize: '13px',
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Create Button */}

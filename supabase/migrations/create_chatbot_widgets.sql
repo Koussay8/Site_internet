@@ -17,6 +17,27 @@ CREATE TABLE IF NOT EXISTS chatbot_widgets (
     }'::jsonb,
     api_key TEXT UNIQUE DEFAULT encode(gen_random_bytes(24), 'hex'),
     is_active BOOLEAN DEFAULT true,
+    
+    -- Integration settings (optional - for RDV booking & email)
+    -- Email configuration
+    owner_email TEXT,                          -- Email du propriétaire pour réception des RDV
+    smtp_host TEXT,                            -- Serveur SMTP (optionnel, ex: smtp.gmail.com)
+    smtp_port INTEGER DEFAULT 587,
+    smtp_user TEXT,
+    smtp_password_encrypted BYTEA,             -- Mot de passe SMTP chiffré avec pgcrypto
+    
+    -- Google Calendar integration (optionnel)
+    google_calendar_id TEXT,
+    google_credentials_encrypted BYTEA,        -- Credentials Google chiffrés
+    
+    -- Google Sheets integration (optionnel)
+    google_sheet_id TEXT,
+    
+    -- Flags for enabled integrations
+    email_enabled BOOLEAN DEFAULT false,
+    calendar_enabled BOOLEAN DEFAULT false,
+    sheets_enabled BOOLEAN DEFAULT false,
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

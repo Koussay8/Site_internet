@@ -4,11 +4,28 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Encryption key from environment (32 bytes for AES-256)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-32-chars-here1234567';
+
+/**
+ * Encrypt sensitive data using AES-256-GCM
+ */
+function encryptData(text: string): string {
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY.slice(0, 32)), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag();
+    // Return iv:authTag:encrypted
+    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
+}
 
 // Function presets with their system prompts
 const FUNCTION_PRESETS: Record<string, string> = {
@@ -94,7 +111,14 @@ export async function POST(request: NextRequest) {
             systemPrompt,
             knowledgeBase,
             functionPreset,
-            settings
+            settings,
+            // Integration settings (optional)
+            ownerEmail,
+            smtpHost,
+            smtpUser,
+            smtpPassword,
+            googleCalendarId,
+            googleSheetId
         } = body;
 
         if (!name) {
@@ -120,18 +144,36 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        // Prepare insert data
+        const insertData: Record<string, unknown> = {
+            user_id: userId,
+            name,
+            company_name: companyName,
+            welcome_message: welcomeMessage || 'Bonjour ! Comment puis-je vous aider ?',
+            system_prompt: finalPrompt,
+            knowledge_base: knowledgeBase || [],
+            function_preset: functionPreset || 'custom',
+            settings: settings || {},
+            // Integration settings
+            owner_email: ownerEmail || null,
+            smtp_host: smtpHost || null,
+            smtp_user: smtpUser || null,
+            google_calendar_id: googleCalendarId || null,
+            google_sheet_id: googleSheetId || null,
+            // Determine which integrations are enabled
+            email_enabled: !!(ownerEmail && smtpHost && smtpUser && smtpPassword),
+            calendar_enabled: !!googleCalendarId,
+            sheets_enabled: !!googleSheetId,
+        };
+
+        // Encrypt sensitive passwords if provided
+        if (smtpPassword) {
+            insertData.smtp_password_encrypted = encryptData(smtpPassword);
+        }
+
         const { data, error } = await supabase
             .from('chatbot_widgets')
-            .insert({
-                user_id: userId,
-                name,
-                company_name: companyName,
-                welcome_message: welcomeMessage || 'Bonjour ! Comment puis-je vous aider ?',
-                system_prompt: finalPrompt,
-                knowledge_base: knowledgeBase || [],
-                function_preset: functionPreset || 'custom',
-                settings: settings || {}
-            })
+            .insert(insertData)
             .select()
             .single();
 

@@ -5,16 +5,36 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import Groq from 'groq-sdk';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY!
-});
+/**
+ * Call Groq API directly via fetch
+ */
+async function callGroqAPI(messages: { role: string; content: string }[]) {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages,
+            temperature: 0.7,
+            max_tokens: 500
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Groq API error: ${response.status}`);
+    }
+
+    return response.json();
+}
 
 /**
  * POST /api/chat/embed - Handle chat message
@@ -71,14 +91,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Call Groq API
-        const completion = await groq.chat.completions.create({
-            messages,
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.7,
-            max_tokens: 500
-        });
-
-        const assistantMessage = completion.choices[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse.";
+        const completion = await callGroqAPI(messages);
+        const assistantMessage = completion.choices?.[0]?.message?.content || "Désolé, je n'ai pas pu générer de réponse.";
 
         // Save or update conversation in database
         const currentSessionId = sessionId || `session_${Date.now()}`;
