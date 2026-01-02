@@ -28,6 +28,13 @@ export interface WhatsAppBot {
   phoneNumber?: string;
   hasQR: boolean;
   botType?: BotType;
+  customPrompt?: string;
+  knowledge?: Array<{ question?: string; answer?: string } | string>;
+  activateOnReceive?: boolean;
+  activateOnSend?: boolean;
+  receiveFromNumbers?: string[];
+  sendToNumbers?: string[];
+  welcomeMessage?: string;
 }
 
 export interface BotConfig {
