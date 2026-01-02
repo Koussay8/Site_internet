@@ -2,7 +2,7 @@
  * App Access Helper - Gestion des accès aux applications
  */
 
-import { supabase } from './client';
+import { supabase } from '@/lib/supabase';
 
 export type AccessLevel = 'demo' | 'standard' | 'admin';
 
