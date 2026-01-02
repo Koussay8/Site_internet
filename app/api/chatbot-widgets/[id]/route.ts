@@ -3,12 +3,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabaseInstance: SupabaseClient | null = null;
+
+function getSupabase() {
+    if (!supabaseInstance) {
+        supabaseInstance = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+    }
+    return supabaseInstance;
+}
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -22,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const userId = request.headers.get('x-user-id');
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('chatbot_widgets')
             .select('*')
             .eq('id', id)
@@ -50,7 +57,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     try {
         const body = await request.json();
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('chatbot_widgets')
             .update({
                 ...body,
@@ -78,7 +85,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const userId = request.headers.get('x-user-id');
 
     try {
-        const { error } = await supabase
+        const { error } = await getSupabase()
             .from('chatbot_widgets')
             .delete()
             .eq('id', id)

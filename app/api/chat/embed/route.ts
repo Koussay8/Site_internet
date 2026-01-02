@@ -4,12 +4,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabaseInstance: SupabaseClient | null = null;
+
+function getSupabase() {
+    if (!supabaseInstance) {
+        supabaseInstance = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+    }
+    return supabaseInstance;
+}
 
 /**
  * Call Groq API directly via fetch
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch widget by API key
-        const { data: widget, error: widgetError } = await supabase
+        const { data: widget, error: widgetError } = await getSupabase()
             .from('chatbot_widgets')
             .select('*')
             .eq('api_key', widgetApiKey)
@@ -98,7 +105,7 @@ export async function POST(request: NextRequest) {
         const currentSessionId = sessionId || `session_${Date.now()}`;
 
         // Check if conversation exists
-        const { data: existingConvo } = await supabase
+        const { data: existingConvo } = await getSupabase()
             .from('chatbot_conversations')
             .select('id, messages')
             .eq('widget_id', widget.id)
@@ -112,7 +119,7 @@ export async function POST(request: NextRequest) {
         ];
 
         if (existingConvo) {
-            await supabase
+            await getSupabase()
                 .from('chatbot_conversations')
                 .update({
                     messages: newMessages,
@@ -120,7 +127,7 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', existingConvo.id);
         } else {
-            await supabase
+            await getSupabase()
                 .from('chatbot_conversations')
                 .insert({
                     widget_id: widget.id,
