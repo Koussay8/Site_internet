@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Loader2,
@@ -45,7 +45,7 @@ const ACCESS_BADGES = {
     admin: { label: 'Administrateur', color: '#8B5CF6', icon: <Crown size={14} /> },
 };
 
-export default function AgentWhatsAppPage() {
+function AgentWhatsAppContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const isDemo = searchParams.get('demo') === 'true';
@@ -906,5 +906,24 @@ export default function AgentWhatsAppPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function AgentWhatsAppPage() {
+    return (
+        <Suspense fallback={
+            <div style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Loader2 size={32} color="#a78bfa" className="animate-spin" />
+            </div>
+        }>
+            <AgentWhatsAppContent />
+        </Suspense>
     );
 }
