@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Loader2,
     ArrowLeft,
@@ -47,9 +47,12 @@ const ACCESS_BADGES = {
 
 export default function AgentWhatsAppPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const isDemo = searchParams.get('demo') === 'true';
+
     const [bots, setBots] = useState<WhatsAppBot[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState<{ email: string } | null>(null);
+    const [user, setUser] = useState<{ email: string; applications?: string[] } | null>(null);
     const [accessLevel, setAccessLevel] = useState<AccessLevel>('demo');
     const [botLimit, setBotLimit] = useState(1);
 
@@ -138,10 +141,37 @@ export default function AgentWhatsAppPage() {
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
 
-            // Check app access level
+            // Demo mode - anyone with session can use (1 bot limit)
+            if (isDemo) {
+                setAccessLevel('demo');
+                setBotLimit(1);
+                return;
+            }
+
+            // Check if user is admin
+            if (parsedUser.email === 'admin@nova.com') {
+                setAccessLevel('admin');
+                setBotLimit(999);
+                return;
+            }
+
+            // Check if user has the app in their applications
+            const userApps = parsedUser.applications || [];
+            if (userApps.includes('agent-whatsapp')) {
+                setAccessLevel('standard');
+                setBotLimit(1); // 1 bot for standard users
+                return;
+            }
+
+            // Check database for app_access (fallback)
             const access = await checkAppAccess(parsedUser.email, 'agent-whatsapp');
-            setAccessLevel(access.accessLevel);
-            setBotLimit(access.botLimit);
+            if (access.accessLevel !== 'demo') {
+                setAccessLevel(access.accessLevel);
+                setBotLimit(access.botLimit);
+            } else {
+                // User doesn't have access, redirect to dashboard
+                router.push('/dashboard');
+            }
         };
 
         checkAuth();

@@ -14,6 +14,7 @@ interface Client {
 }
 
 const AVAILABLE_APPS = [
+    { id: 'agent-whatsapp', name: 'Agent WhatsApp' },
     { id: 'cv-profiler', name: 'CV Profiler' },
 ];
 

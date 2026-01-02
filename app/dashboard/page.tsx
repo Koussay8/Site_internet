@@ -30,6 +30,14 @@ interface AppRequest {
 }
 
 const ALL_APPS: Record<string, Application> = {
+    'agent-whatsapp': {
+        id: 'agent-whatsapp',
+        name: 'Agent WhatsApp',
+        description: 'Bot WhatsApp intelligent pour votre entreprise. Transcription vocale, facturation auto, et réponses IA 24h/24.',
+        icon: <MessageCircle className="w-8 h-8" />,
+        href: '/apps/agent-whatsapp',
+        demoHref: '/apps/agent-whatsapp?demo=true',
+    },
     'cv-profiler': {
         id: 'cv-profiler',
         name: 'CV Profiler',
@@ -116,14 +124,6 @@ const ALL_APPS: Record<string, Application> = {
         name: 'Simulation Avant/Après',
         description: 'Rassurez vos patients avec des simulations photo-réalistes. +40% de conversions.',
         icon: <ImageIcon className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'whatsapp-agent-b2b': {
-        id: 'whatsapp-agent-b2b',
-        name: 'Agent WhatsApp B2B',
-        description: 'Vos clients commandent par WhatsApp, l\'IA vérifie les stocks et envoie le récapitulatif au fournisseur.',
-        icon: <MessageCircle className="w-8 h-8" />,
         href: '#',
         demoHref: '#',
     },
