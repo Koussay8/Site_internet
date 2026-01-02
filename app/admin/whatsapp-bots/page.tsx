@@ -19,7 +19,9 @@ import {
     Clock,
     ChevronDown,
     ChevronUp,
-    Settings
+    Settings,
+    X,
+    Save
 } from 'lucide-react';
 import type { WhatsAppBot, BotType } from '@/types/whatsapp-bot';
 import { BOT_TYPE_LABELS } from '@/types/whatsapp-bot';
@@ -48,6 +50,22 @@ export default function WhatsAppBotsPage() {
     const [welcomeMessage, setWelcomeMessage] = useState('');
     const [knowledgeText, setKnowledgeText] = useState('');
     const [showAdvanced, setShowAdvanced] = useState(false);
+
+    // Activation modes
+    const [activateOnReceive, setActivateOnReceive] = useState(true);
+    const [activateOnSend, setActivateOnSend] = useState(false);
+    const [receiveFromNumbers, setReceiveFromNumbers] = useState('');
+    const [sendToNumbers, setSendToNumbers] = useState('');
+
+    // Settings modal state
+    const [editingBot, setEditingBot] = useState<WhatsAppBot | null>(null);
+    const [editPrompt, setEditPrompt] = useState('');
+    const [editKnowledge, setEditKnowledge] = useState('');
+    const [editActivateOnReceive, setEditActivateOnReceive] = useState(true);
+    const [editActivateOnSend, setEditActivateOnSend] = useState(false);
+    const [editReceiveNumbers, setEditReceiveNumbers] = useState('');
+    const [editSendNumbers, setEditSendNumbers] = useState('');
+    const [saving, setSaving] = useState(false);
 
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState<string | null>(null);
@@ -162,6 +180,14 @@ export default function WhatsAppBotsPage() {
                         knowledge: knowledgeEntries.length > 0 ? knowledgeEntries : undefined,
                         welcomeMessage: welcomeMessage.trim() || undefined,
                         language: 'fr',
+                        activateOnReceive,
+                        activateOnSend,
+                        receiveFromNumbers: receiveFromNumbers.trim()
+                            ? receiveFromNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
+                        sendToNumbers: sendToNumbers.trim()
+                            ? sendToNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
                     },
                 }),
             });
@@ -174,12 +200,81 @@ export default function WhatsAppBotsPage() {
                 setWelcomeMessage('');
                 setKnowledgeText('');
                 setShowAdvanced(false);
+                setActivateOnReceive(true);
+                setActivateOnSend(false);
+                setReceiveFromNumbers('');
+                setSendToNumbers('');
                 await loadBots();
             }
         } catch (error) {
             console.error('Error creating bot:', error);
         } finally {
             setCreating(false);
+        }
+    };
+
+    // Open settings modal
+    const openSettings = (bot: WhatsAppBot) => {
+        setEditingBot(bot);
+        setEditPrompt(bot.customPrompt || '');
+        const knowledgeArr = bot.knowledge || [];
+        const knowledgeText = knowledgeArr.map((k: { question?: string; answer?: string } | string) => {
+            if (typeof k === 'object' && k.question && k.answer) {
+                return `${k.question} | ${k.answer}`;
+            }
+            return String(k);
+        }).join('\n');
+        setEditKnowledge(knowledgeText);
+        setEditActivateOnReceive(bot.activateOnReceive ?? true);
+        setEditActivateOnSend(bot.activateOnSend ?? false);
+        setEditReceiveNumbers((bot.receiveFromNumbers || []).join(', '));
+        setEditSendNumbers((bot.sendToNumbers || []).join(', '));
+    };
+
+    // Save settings
+    const saveSettings = async () => {
+        if (!editingBot) return;
+        setSaving(true);
+        try {
+            const knowledgeEntries = editKnowledge.trim()
+                ? editKnowledge.split('\n').filter(line => line.trim()).map(line => {
+                    const parts = line.split('|');
+                    if (parts.length >= 2) {
+                        return { question: parts[0].trim(), answer: parts[1].trim() };
+                    }
+                    return line.trim();
+                })
+                : [];
+
+            const response = await fetch(`/api/whatsapp-bots/${editingBot.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    config: {
+                        customPrompt: editPrompt.trim() || null,
+                        activateOnReceive: editActivateOnReceive,
+                        activateOnSend: editActivateOnSend,
+                        receiveFromNumbers: editReceiveNumbers.trim()
+                            ? editReceiveNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
+                        sendToNumbers: editSendNumbers.trim()
+                            ? editSendNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
+                    },
+                    knowledge: knowledgeEntries,
+                }),
+            });
+
+            if (response.ok) {
+                setEditingBot(null);
+                await loadBots();
+            } else {
+                alert('Erreur de sauvegarde');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -547,6 +642,75 @@ export default function WhatsAppBotsPage() {
                                     }}
                                 />
                             </div>
+
+                            {/* Activation Modes */}
+                            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                <label style={{ display: 'block', color: '#a78bfa', fontSize: '14px', marginBottom: '12px', fontWeight: 600 }}>
+                                    🎯 Modes d&apos;activation vocale
+                                </label>
+
+                                <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={activateOnReceive}
+                                            onChange={(e) => setActivateOnReceive(e.target.checked)}
+                                            style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                        />
+                                        <span style={{ color: 'white', fontSize: '14px' }}>📥 Activation à la réception</span>
+                                    </label>
+                                    {activateOnReceive && (
+                                        <input
+                                            type="text"
+                                            value={receiveFromNumbers}
+                                            onChange={(e) => setReceiveFromNumbers(e.target.value)}
+                                            placeholder="Numéros sources (ex: 33612345678) - Vide = tous"
+                                            style={{
+                                                width: 'calc(100% - 28px)',
+                                                marginTop: '8px',
+                                                marginLeft: '28px',
+                                                padding: '10px',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.2)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                fontSize: '12px',
+                                            }}
+                                        />
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={activateOnSend}
+                                            onChange={(e) => setActivateOnSend(e.target.checked)}
+                                            style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                        />
+                                        <span style={{ color: 'white', fontSize: '14px' }}>📤 Activation à l&apos;envoi</span>
+                                    </label>
+                                    {activateOnSend && (
+                                        <input
+                                            type="text"
+                                            value={sendToNumbers}
+                                            onChange={(e) => setSendToNumbers(e.target.value)}
+                                            placeholder="Numéros destinataires (ex: 33612345678) - Vide = tous"
+                                            style={{
+                                                width: 'calc(100% - 28px)',
+                                                marginTop: '8px',
+                                                marginLeft: '28px',
+                                                padding: '10px',
+                                                background: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.2)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                fontSize: '12px',
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -775,6 +939,25 @@ export default function WhatsAppBotsPage() {
                                         >
                                             <Trash2 size={14} />
                                         </button>
+
+                                        {/* Settings button */}
+                                        <button
+                                            onClick={() => openSettings(bot)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '10px',
+                                                background: 'rgba(139, 92, 246, 0.2)',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                color: '#a78bfa',
+                                                cursor: 'pointer',
+                                            }}
+                                            title="Paramètres"
+                                        >
+                                            <Settings size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -782,6 +965,186 @@ export default function WhatsAppBotsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Settings Modal */}
+            {editingBot && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '20px',
+                    }}
+                    onClick={() => setEditingBot(null)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                            borderRadius: '16px',
+                            padding: '24px',
+                            maxWidth: '600px',
+                            width: '100%',
+                            maxHeight: '80vh',
+                            overflowY: 'auto',
+                            border: '1px solid rgba(139, 92, 246, 0.3)',
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ color: 'white', margin: 0, fontSize: '18px' }}>
+                                ⚙️ Paramètres: {editingBot.name}
+                            </h2>
+                            <button onClick={() => setEditingBot(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Prompt */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', color: '#a78bfa', fontSize: '14px', marginBottom: '6px' }}>
+                                📝 Prompt personnalisé
+                            </label>
+                            <textarea
+                                value={editPrompt}
+                                onChange={e => setEditPrompt(e.target.value)}
+                                placeholder="Instructions pour l'IA..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '100px',
+                                    padding: '12px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    fontSize: '13px',
+                                    resize: 'vertical',
+                                }}
+                            />
+                        </div>
+
+                        {/* Knowledge */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', color: '#a78bfa', fontSize: '14px', marginBottom: '6px' }}>
+                                📚 Base de connaissances
+                            </label>
+                            <textarea
+                                value={editKnowledge}
+                                onChange={e => setEditKnowledge(e.target.value)}
+                                placeholder="Question | Réponse (une par ligne)"
+                                style={{
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '12px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    fontSize: '13px',
+                                    resize: 'vertical',
+                                }}
+                            />
+                        </div>
+
+                        {/* Activation modes */}
+                        <div style={{ marginBottom: '16px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                            <label style={{ display: 'block', color: '#a78bfa', fontSize: '14px', marginBottom: '12px', fontWeight: 600 }}>
+                                🎯 Modes d&apos;activation
+                            </label>
+
+                            <div style={{ marginBottom: '12px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={editActivateOnReceive}
+                                        onChange={e => setEditActivateOnReceive(e.target.checked)}
+                                        style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                    />
+                                    <span style={{ color: 'white', fontSize: '14px' }}>📥 Activation à la réception</span>
+                                </label>
+                                {editActivateOnReceive && (
+                                    <input
+                                        type="text"
+                                        value={editReceiveNumbers}
+                                        onChange={e => setEditReceiveNumbers(e.target.value)}
+                                        placeholder="Numéros sources (ex: 33612345678) - Vide = tous"
+                                        style={{
+                                            width: 'calc(100% - 28px)',
+                                            marginTop: '8px',
+                                            marginLeft: '28px',
+                                            padding: '10px',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            borderRadius: '8px',
+                                            color: 'white',
+                                            fontSize: '12px',
+                                        }}
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={editActivateOnSend}
+                                        onChange={e => setEditActivateOnSend(e.target.checked)}
+                                        style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                    />
+                                    <span style={{ color: 'white', fontSize: '14px' }}>📤 Activation à l&apos;envoi</span>
+                                </label>
+                                {editActivateOnSend && (
+                                    <input
+                                        type="text"
+                                        value={editSendNumbers}
+                                        onChange={e => setEditSendNumbers(e.target.value)}
+                                        placeholder="Numéros destinataires (ex: 33612345678) - Vide = tous"
+                                        style={{
+                                            width: 'calc(100% - 28px)',
+                                            marginTop: '8px',
+                                            marginLeft: '28px',
+                                            padding: '10px',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            borderRadius: '8px',
+                                            color: 'white',
+                                            fontSize: '12px',
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Save button */}
+                        <button
+                            onClick={saveSettings}
+                            disabled={saving}
+                            style={{
+                                width: '100%',
+                                padding: '14px',
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: 'white',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                cursor: saving ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                opacity: saving ? 0.7 : 1,
+                            }}
+                        >
+                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
