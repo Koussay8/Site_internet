@@ -4,19 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-let supabaseInstance: SupabaseClient | null = null;
-
-function getSupabase() {
-    if (!supabaseInstance) {
-        supabaseInstance = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-    }
-    return supabaseInstance;
-}
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 /**
  * Call Groq API directly via fetch
@@ -56,7 +44,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch widget by API key
-        const { data: widget, error: widgetError } = await getSupabase()
+        const { data: widget, error: widgetError } = await getSupabaseAdmin()
             .from('chatbot_widgets')
             .select('*')
             .eq('api_key', widgetApiKey)
@@ -105,7 +93,7 @@ export async function POST(request: NextRequest) {
         const currentSessionId = sessionId || `session_${Date.now()}`;
 
         // Check if conversation exists
-        const { data: existingConvo } = await getSupabase()
+        const { data: existingConvo } = await getSupabaseAdmin()
             .from('chatbot_conversations')
             .select('id, messages')
             .eq('widget_id', widget.id)
@@ -119,7 +107,7 @@ export async function POST(request: NextRequest) {
         ];
 
         if (existingConvo) {
-            await getSupabase()
+            await getSupabaseAdmin()
                 .from('chatbot_conversations')
                 .update({
                     messages: newMessages,
@@ -127,7 +115,7 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', existingConvo.id);
         } else {
-            await getSupabase()
+            await getSupabaseAdmin()
                 .from('chatbot_conversations')
                 .insert({
                     widget_id: widget.id,

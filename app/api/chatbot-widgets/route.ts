@@ -3,20 +3,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
-
-let supabaseInstance: SupabaseClient | null = null;
-
-function getSupabase() {
-    if (!supabaseInstance) {
-        supabaseInstance = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-    }
-    return supabaseInstance;
-}
 
 // Encryption key from environment (32 bytes for AES-256)
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-32-chars-here1234567';
@@ -84,7 +72,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
         }
 
-        const { data, error } = await getSupabase()
+        const { data, error } = await getSupabaseAdmin()
             .from('chatbot_widgets')
             .select('*')
             .eq('user_id', userId)
@@ -178,7 +166,7 @@ export async function POST(request: NextRequest) {
             insertData.smtp_password_encrypted = encryptData(smtpPassword);
         }
 
-        const { data, error } = await getSupabase()
+        const { data, error } = await getSupabaseAdmin()
             .from('chatbot_widgets')
             .insert(insertData)
             .select()
