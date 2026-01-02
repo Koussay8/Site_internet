@@ -259,10 +259,12 @@ function AgentWhatsAppContent() {
                 await loadBots();
             } else {
                 const error = await response.json();
-                alert(error.error || 'Erreur lors de la création');
+                console.error('Bot creation failed:', error);
+                alert(error.error || 'Erreur lors de la création du bot');
             }
         } catch (error) {
             console.error('Error creating bot:', error);
+            alert('Erreur de connexion au serveur. Vérifiez que le backend est actif.');
         } finally {
             setCreating(false);
         }
@@ -416,7 +418,7 @@ function AgentWhatsAppContent() {
                         <strong>🔒 Mode Démo</strong>
                         <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#94a3b8' }}>
                             Vous pouvez créer {botLimit} bot pour tester. Pour un accès complet,
-                            <a href="/apply" style={{ color: '#8B5CF6', marginLeft: '4px' }}>demandez l&apos;accès</a>.
+                            <a href="/dashboard" style={{ color: '#8B5CF6', marginLeft: '4px' }}>demandez l&apos;accès</a>.
                         </p>
                     </div>
                 )}

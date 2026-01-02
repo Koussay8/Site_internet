@@ -56,6 +56,10 @@ export async function POST(request: NextRequest) {
         const isAdmin = request.headers.get('X-Is-Admin') || 'false';
         const botLimit = request.headers.get('X-Bot-Limit') || '1';
 
+        console.log(`[WhatsApp API] Creating bot for ${userEmail}, isAdmin:${isAdmin}, limit:${botLimit}`);
+        console.log(`[WhatsApp API] Backend URL: ${API_URL}`);
+        console.log(`[WhatsApp API] Body:`, JSON.stringify(body));
+
         const response = await fetch(`${API_URL}/api/admin/bots`, {
             method: 'POST',
             headers: {
@@ -68,17 +72,21 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify(body),
         });
 
+        console.log(`[WhatsApp API] Response status: ${response.status}`);
+
         if (!response.ok) {
             const error = await response.json();
+            console.error(`[WhatsApp API] Error:`, error);
             return NextResponse.json(error, { status: response.status });
         }
 
         const data = await response.json();
+        console.log(`[WhatsApp API] Success:`, data);
         return NextResponse.json(data);
     } catch (error) {
-        console.error('WhatsApp Bots API error:', error);
+        console.error('[WhatsApp API] Critical error:', error);
         return NextResponse.json(
-            { error: 'Failed to create bot' },
+            { error: 'Failed to create bot - Backend not reachable' },
             { status: 500 }
         );
     }
