@@ -88,14 +88,14 @@ Idéal pour que le bot fonctionne tout le temps, sans garder votre ordinateur al
 
 ```bash
 # 1. Télécharger le script d'installation
-wget https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/gcp-setup.sh
+wget https://raw.githubusercontent.com/Koussay8/whatsapp_bot/main/gcp-setup.sh
 
 # 2. Lancer l'installation (dure ~2 minutes)
 sudo chmod +x gcp-setup.sh
 sudo ./gcp-setup.sh
 
 # 3. Cloner votre code (si pas fait via git)
-git clone https://github.com/VOTRE_USER/VOTRE_REPO.git bot
+git clone https://github.com/Koussay8/whatsapp_bot.git bot
 cd bot
 
 # 4. Installer les dépendances du projet
@@ -121,6 +121,65 @@ pm2 startup
 
 2. Scannez le QR Code avec votre téléphone.
 3. Pour quitter les logs sans arrêter le bot : `Ctrl + C`.
+
+### 4. Configurer l'IP externe (pour le site web)
+
+Pour que votre site Vercel puisse accéder au bot, vous devez configurer une IP externe statique.
+
+**4.1. Réserver une IP statique :**
+
+1. Google Cloud Console → **VPC Network** → **IP addresses**
+2. Cliquez **Reserve External Static Address**
+3. Nom : `whatsapp-bot-ip`
+4. Region : même que votre VM (ex: `us-central1`)
+5. Attached to : sélectionnez votre VM `whatsapp-bot`
+6. Cliquez **Reserve**
+
+> 💰 Coût : ~$3/mois (couvert par les crédits GCP)
+
+**4.2. Ouvrir le port 3001 dans le firewall :**
+
+1. Google Cloud Console → **VPC Network** → **Firewall**
+2. Cliquez **Create Firewall Rule**
+3. Configuration :
+   - Nom : `allow-bot-api`
+   - Network : default
+   - Direction : Ingress
+   - Targets : All instances
+   - Source IP ranges : `0.0.0.0/0`
+   - Protocols and ports : TCP → `3001`
+4. Cliquez **Create**
+
+**4.3. Ajouter ADMIN_SECRET au .env :**
+
+```bash
+# Sur la VM GCP
+nano .env
+
+# Ajoutez cette ligne :
+ADMIN_SECRET=votre-secret-admin-securise
+```
+
+**4.4. Redémarrer le bot :**
+
+```bash
+pm2 restart whatsapp-bot
+```
+
+### 5. Configurer Vercel
+
+1. Allez sur [vercel.com](https://vercel.com) → votre projet → Settings → Environment Variables
+2. Ajoutez :
+   - `WHATSAPP_BOT_API_URL` = `http://VOTRE_IP_EXTERNE:3001`
+   - `WHATSAPP_BOT_ADMIN_SECRET` = `votre-secret-admin-securise`
+3. Redéployez le site
+
+### 6. Tester
+
+1. Accédez à `https://votre-site.vercel.app/admin/whatsapp-bots`
+2. Le QR code devrait s'afficher
+3. Scannez-le avec WhatsApp
+4. Le statut passe à "Connecté"
 
 ## 📱 Utilisation
 
