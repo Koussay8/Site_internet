@@ -124,15 +124,32 @@ export async function POST(request: NextRequest) {
                 });
         }
 
+        const corsHeaders = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        };
+
         return NextResponse.json({
             message: assistantMessage,
             sessionId: currentSessionId,
             shouldSuggestAppointment
-        });
+        }, { headers: corsHeaders });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Chat error:', error);
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        return NextResponse.json(
+            { error: 'Erreur serveur', details: errorMessage },
+            {
+                status: 500,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                }
+            }
+        );
     }
 }
 
