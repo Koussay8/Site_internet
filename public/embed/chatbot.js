@@ -1,334 +1,307 @@
 /**
  * NovaSolutions Chatbot Widget - Embeddable Script
- * Usage: <script src="https://votre-domaine.com/embed/chatbot.js" data-client-id="CLIENT_ID"></script>
+ * Include this script on any website to add the chatbot
+ * 
+ * Usage: <script src="https://yoursite.com/embed/chatbot.js" data-widget-key="YOUR_KEY"></script>
  */
+
 (function () {
-    'use strict';
+    // Get widget key from script tag
+    const scriptTag = document.currentScript || document.querySelector('script[data-widget-key]');
+    const widgetKey = scriptTag?.getAttribute('data-widget-key');
 
-    // Get client ID from script tag
-    const scriptTag = document.currentScript;
-    const clientId = scriptTag?.getAttribute('data-client-id') || '';
-    const apiUrl = scriptTag?.src.replace('/embed/chatbot.js', '') || '';
-
-    if (!clientId) {
-        console.error('[NovaChatbot] Missing data-client-id attribute');
+    if (!widgetKey) {
+        console.error('NovaSolutions Chatbot: Missing data-widget-key attribute');
         return;
     }
 
-    // Inject CSS
-    const styles = `
+    // Configuration
+    const API_BASE = scriptTag?.src.replace('/embed/chatbot.js', '') || window.location.origin;
+    const COLORS = {
+        primary: '#8B5CF6',
+        primaryDark: '#7C3AED',
+        bg: '#1e1b4b',
+        text: '#ffffff',
+        textMuted: '#94a3b8'
+    };
+
+    // State
+    let isOpen = false;
+    let sessionId = localStorage.getItem('nova_chat_session') || null;
+    let conversationHistory = [];
+    let welcomeMessage = 'Bonjour ! Comment puis-je vous aider ?';
+
+    // Create styles
+    const styles = document.createElement('style');
+    styles.textContent = `
         #nova-chatbot-widget {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 999999;
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
         }
-
-        #nova-chatbot-btn {
+        
+        #nova-chat-button {
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%);
+            background: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%);
             border: none;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            transition: all 0.3s ease;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        #nova-chatbot-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+        
+        #nova-chat-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5);
         }
-
-        #nova-chatbot-btn .chat-icon,
-        #nova-chatbot-btn .close-icon {
+        
+        #nova-chat-button svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+        
+        #nova-chat-window {
             position: absolute;
-            transition: all 0.3s ease;
-        }
-
-        #nova-chatbot-btn .close-icon {
-            opacity: 0;
-            transform: rotate(-90deg);
-        }
-
-        #nova-chatbot-btn.active .chat-icon {
-            opacity: 0;
-            transform: rotate(90deg);
-        }
-
-        #nova-chatbot-btn.active .close-icon {
-            opacity: 1;
-            transform: rotate(0);
-        }
-
-        #nova-chatbot-container {
-            position: absolute;
-            bottom: 80px;
+            bottom: 70px;
             right: 0;
             width: 380px;
             height: 520px;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            display: flex;
+            background: linear-gradient(135deg, ${COLORS.bg} 0%, #312e81 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            display: none;
             flex-direction: column;
-            transition: all 0.3s ease;
-            opacity: 1;
-            transform: translateY(0);
+            overflow: hidden;
+            border: 1px solid rgba(139, 92, 246, 0.3);
         }
-
-        #nova-chatbot-container.hidden {
-            opacity: 0;
-            transform: translateY(20px);
-            pointer-events: none;
+        
+        #nova-chat-window.open {
+            display: flex;
+            animation: nova-slide-up 0.3s ease;
         }
-
-        .nova-chatbot-header {
-            background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%);
-            padding: 20px;
-            text-align: center;
-            color: white;
+        
+        @keyframes nova-slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .nova-chatbot-header span {
-            font-size: 18px;
+        
+        #nova-chat-header {
+            padding: 16px 20px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        #nova-chat-header h3 {
+            margin: 0;
+            color: ${COLORS.text};
+            font-size: 16px;
             font-weight: 600;
-            display: block;
         }
-
-        .nova-chatbot-header small {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 4px;
-            display: block;
+        
+        #nova-chat-close {
+            background: none;
+            border: none;
+            color: ${COLORS.textMuted};
+            cursor: pointer;
+            padding: 4px;
         }
-
-        #nova-chatbot-messages {
+        
+        #nova-chat-messages {
             flex: 1;
+            padding: 16px;
             overflow-y: auto;
-            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-
-        #nova-chatbot-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #nova-chatbot-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        #nova-chatbot-messages::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.3);
-            border-radius: 3px;
-        }
-
-        .nova-chat-message {
+        
+        .nova-message {
             max-width: 85%;
             padding: 12px 16px;
             border-radius: 16px;
             font-size: 14px;
             line-height: 1.5;
-            animation: nova-fadeIn 0.3s ease;
         }
-
-        @keyframes nova-fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .nova-chat-message.user {
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            color: white;
+        
+        .nova-message.user {
             align-self: flex-end;
+            background: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%);
+            color: white;
             border-bottom-right-radius: 4px;
         }
-
-        .nova-chat-message.bot {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.9);
+        
+        .nova-message.assistant {
             align-self: flex-start;
+            background: rgba(255,255,255,0.1);
+            color: ${COLORS.text};
             border-bottom-left-radius: 4px;
         }
-
-        .nova-typing-indicator {
+        
+        .nova-typing {
             display: flex;
             gap: 4px;
-            padding: 8px 0;
+            padding: 12px 16px;
         }
-
-        .nova-typing-indicator span {
+        
+        .nova-typing span {
             width: 8px;
             height: 8px;
-            background: rgba(139, 92, 246, 0.6);
             border-radius: 50%;
+            background: ${COLORS.textMuted};
             animation: nova-bounce 1.4s infinite ease-in-out;
         }
-
-        .nova-typing-indicator span:nth-child(1) { animation-delay: 0s; }
-        .nova-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .nova-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
+        
+        .nova-typing span:nth-child(1) { animation-delay: 0s; }
+        .nova-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .nova-typing span:nth-child(3) { animation-delay: 0.4s; }
+        
         @keyframes nova-bounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
-
-        .nova-chatbot-input-area {
+        
+        #nova-chat-input-area {
+            padding: 16px;
+            background: rgba(0,0,0,0.2);
             display: flex;
-            padding: 15px;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        #nova-chatbot-input {
+        
+        #nova-chat-input {
             flex: 1;
             padding: 12px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: ${COLORS.text};
             font-size: 14px;
             outline: none;
-            transition: all 0.3s ease;
         }
-
-        #nova-chatbot-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+        
+        #nova-chat-input::placeholder {
+            color: ${COLORS.textMuted};
         }
-
-        #nova-chatbot-input:focus {
-            border-color: rgba(139, 92, 246, 0.5);
-            background: rgba(255, 255, 255, 0.08);
+        
+        #nova-chat-input:focus {
+            border-color: ${COLORS.primary};
         }
-
-        #nova-chatbot-send {
+        
+        #nova-chat-send {
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #a855f7, #6366f1);
+            background: linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryDark} 100%);
             border: none;
             cursor: pointer;
-            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
         }
-
-        #nova-chatbot-send:hover {
-            transform: scale(1.1);
+        
+        #nova-chat-send svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
         }
-
-        #nova-chatbot-send:disabled {
+        
+        #nova-chat-send:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
-
+        
         @media (max-width: 480px) {
-            #nova-chatbot-container {
+            #nova-chat-window {
                 width: calc(100vw - 40px);
                 height: calc(100vh - 120px);
-                bottom: 80px;
-                right: -10px;
+                bottom: 70px;
+                right: 0;
             }
         }
     `;
-
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = styles;
-    document.head.appendChild(styleSheet);
+    document.head.appendChild(styles);
 
     // Create widget HTML
     const widget = document.createElement('div');
     widget.id = 'nova-chatbot-widget';
     widget.innerHTML = `
-        <button id="nova-chatbot-btn">
-            <span class="chat-icon">💬</span>
-            <span class="close-icon">✕</span>
-        </button>
-        <div id="nova-chatbot-container" class="hidden">
-            <div class="nova-chatbot-header">
-                <span>🤖 Assistant IA</span>
-                <small>Comment puis-je vous aider ?</small>
+        <div id="nova-chat-window">
+            <div id="nova-chat-header">
+                <h3>💬 Assistant</h3>
+                <button id="nova-chat-close">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <div id="nova-chatbot-messages"></div>
-            <div class="nova-chatbot-input-area">
-                <input type="text" id="nova-chatbot-input" placeholder="Écrivez votre message...">
-                <button id="nova-chatbot-send">➤</button>
+            <div id="nova-chat-messages"></div>
+            <div id="nova-chat-input-area">
+                <input type="text" id="nova-chat-input" placeholder="Écrivez votre message..." />
+                <button id="nova-chat-send">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
             </div>
         </div>
+        <button id="nova-chat-button">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            </svg>
+        </button>
     `;
     document.body.appendChild(widget);
 
-    // State
-    let isOpen = false;
-    let messages = [];
-    let isLoading = false;
+    // Get elements
+    const chatButton = document.getElementById('nova-chat-button');
+    const chatWindow = document.getElementById('nova-chat-window');
+    const chatClose = document.getElementById('nova-chat-close');
+    const chatMessages = document.getElementById('nova-chat-messages');
+    const chatInput = document.getElementById('nova-chat-input');
+    const chatSend = document.getElementById('nova-chat-send');
 
-    // Elements
-    const btn = document.getElementById('nova-chatbot-btn');
-    const container = document.getElementById('nova-chatbot-container');
-    const messagesEl = document.getElementById('nova-chatbot-messages');
-    const input = document.getElementById('nova-chatbot-input');
-    const sendBtn = document.getElementById('nova-chatbot-send');
-
-    // Toggle chatbot
-    btn.addEventListener('click', () => {
+    // Toggle chat
+    function toggleChat() {
         isOpen = !isOpen;
-        btn.classList.toggle('active', isOpen);
-        container.classList.toggle('hidden', !isOpen);
-        if (isOpen && messages.length === 0) {
-            addBotMessage("Bonjour ! Comment puis-je vous aider aujourd'hui ?");
+        chatWindow.classList.toggle('open', isOpen);
+        if (isOpen && chatMessages.children.length === 0) {
+            addMessage(welcomeMessage, 'assistant');
         }
-    });
-
-    // Add message to UI
-    function addMessage(role, content) {
-        const msg = document.createElement('div');
-        msg.className = `nova-chat-message ${role}`;
-        msg.textContent = content;
-        messagesEl.appendChild(msg);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-        messages.push({ role, content });
     }
 
-    function addBotMessage(text) {
-        // Simulate typing effect
-        const msg = document.createElement('div');
-        msg.className = 'nova-chat-message bot';
-        messagesEl.appendChild(msg);
+    chatButton.addEventListener('click', toggleChat);
+    chatClose.addEventListener('click', toggleChat);
 
-        let i = 0;
-        const interval = setInterval(() => {
-            if (i < text.length) {
-                msg.textContent = text.slice(0, i + 1);
-                messagesEl.scrollTop = messagesEl.scrollHeight;
-                i++;
-            } else {
-                clearInterval(interval);
-                messages.push({ role: 'bot', content: text });
-            }
-        }, 15);
+    // Add message to chat
+    function addMessage(text, role) {
+        const msg = document.createElement('div');
+        msg.className = `nova-message ${role}`;
+        msg.textContent = text;
+        chatMessages.appendChild(msg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        if (role !== 'typing') {
+            conversationHistory.push({ role, content: text });
+        }
     }
 
+    // Show typing indicator
     function showTyping() {
         const typing = document.createElement('div');
-        typing.className = 'nova-chat-message bot';
+        typing.className = 'nova-message assistant nova-typing';
         typing.id = 'nova-typing';
-        typing.innerHTML = '<div class="nova-typing-indicator"><span></span><span></span><span></span></div>';
-        messagesEl.appendChild(typing);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        typing.innerHTML = '<span></span><span></span><span></span>';
+        chatMessages.appendChild(typing);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function hideTyping() {
@@ -338,69 +311,50 @@
 
     // Send message
     async function sendMessage() {
-        const text = input.value.trim();
-        if (!text || isLoading) return;
+        const text = chatInput.value.trim();
+        if (!text) return;
 
-        input.value = '';
-        addMessage('user', text);
-        isLoading = true;
-        sendBtn.disabled = true;
+        chatInput.value = '';
+        chatSend.disabled = true;
+
+        addMessage(text, 'user');
         showTyping();
 
         try {
-            const response = await fetch(`${apiUrl}/api/embed/chat`, {
+            const response = await fetch(`${API_BASE}/api/chat/embed`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    clientId: clientId,
+                    widgetApiKey: widgetKey,
+                    sessionId: sessionId,
                     message: text,
-                    history: messages.slice(-10)
+                    conversationHistory: conversationHistory.slice(0, -1) // Exclude new message
                 })
             });
 
             const data = await response.json();
             hideTyping();
 
-            if (data.error) {
-                addBotMessage("Désolé, une erreur s'est produite. Réessayez.");
-            } else {
-                // Handle booking block if present
-                const blockPattern = /\*{0,2}BLOCK_RDV\*{0,2}\s*:?\s*(\{[\s\S]*?\})/i;
-                const blockMatch = data.response.match(blockPattern);
-
-                if (blockMatch) {
-                    try {
-                        const bookingData = JSON.parse(blockMatch[1]);
-                        const hasEmail = bookingData.contact?.includes('@');
-                        const confirmMsg = hasEmail
-                            ? "Parfait ! 📧 Vous recevrez un email de confirmation. À très bientôt !"
-                            : "C'est noté ! Nous vous contacterons très bientôt !";
-                        addBotMessage(confirmMsg);
-
-                        // Send booking notification
-                        await fetch(`${apiUrl}/api/embed/booking`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ clientId, ...bookingData })
-                        });
-                    } catch {
-                        addBotMessage(data.response.replace(blockPattern, '').trim());
-                    }
-                } else {
-                    addBotMessage(data.response);
-                }
+            if (data.message) {
+                addMessage(data.message, 'assistant');
             }
+
+            if (data.sessionId && !sessionId) {
+                sessionId = data.sessionId;
+                localStorage.setItem('nova_chat_session', sessionId);
+            }
+
         } catch (error) {
             hideTyping();
-            addBotMessage("Désolé, une erreur s'est produite. Réessayez.");
-        } finally {
-            isLoading = false;
-            sendBtn.disabled = false;
+            addMessage('Désolé, une erreur est survenue. Veuillez réessayer.', 'assistant');
         }
+
+        chatSend.disabled = false;
+        chatInput.focus();
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-    input.addEventListener('keypress', (e) => {
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
 

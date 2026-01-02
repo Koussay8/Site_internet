@@ -60,8 +60,8 @@ const ALL_APPS: Record<string, Application> = {
         name: 'Chatbot IA Multi-Canal',
         description: 'Assistant IA sur votre site, Instagram, WhatsApp ou Messenger. Répond, rassure vos clients et prend des RDV 24h/24.',
         icon: <MessageSquare className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
+        href: '/apps/chatbot-ia',
+        demoHref: '/apps/chatbot-ia?demo=true',
     },
     'qualification-dossiers': {
         id: 'qualification-dossiers',
