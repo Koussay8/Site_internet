@@ -157,6 +157,10 @@ export default function DashboardPage() {
     const [rdvData, setRdvData] = useState({ date: '', contact: '', message: '' });
     const [submitLoading, setSubmitLoading] = useState(false);
 
+    // Admin-specific: which apps to show on dashboard
+    const [adminDashboardApps, setAdminDashboardApps] = useState<string[]>([]);
+    const isAdmin = user?.email === 'admin@nova.com';
+
     useEffect(() => {
         checkAuthAndApps();
     }, []);
@@ -174,21 +178,39 @@ export default function DashboardPage() {
             const userData: User = JSON.parse(storedUser);
             setUser(userData);
 
-            // Apps que l'utilisateur possède
-            const apps = (userData.applications || [])
-                .map(appId => ALL_APPS[appId])
-                .filter(Boolean);
-            setUserApps(apps);
+            // Check if admin
+            const userIsAdmin = userData.email === 'admin@nova.com';
 
-            // Récupérer les demandes en cours
-            try {
-                const res = await fetch(`/api/app-requests?clientId=${userData.id}`);
-                const data = await res.json();
-                if (data.requests) {
-                    setPendingRequests(data.requests.filter((r: AppRequest) => r.status === 'pending'));
+            if (userIsAdmin) {
+                // Admin: load dashboard preferences from localStorage
+                const savedAdminApps = localStorage.getItem('admin_dashboard_apps');
+                if (savedAdminApps) {
+                    setAdminDashboardApps(JSON.parse(savedAdminApps));
+                } else {
+                    // Default: show first 2 apps
+                    const defaultApps = ['agent-whatsapp', 'cv-profiler'];
+                    setAdminDashboardApps(defaultApps);
+                    localStorage.setItem('admin_dashboard_apps', JSON.stringify(defaultApps));
                 }
-            } catch (e) {
-                console.log('Could not fetch requests:', e);
+                // Admin has access to all apps anyway
+                setUserApps([]);
+            } else {
+                // Regular user: apps they own
+                const apps = (userData.applications || [])
+                    .map(appId => ALL_APPS[appId])
+                    .filter(Boolean);
+                setUserApps(apps);
+
+                // Récupérer les demandes en cours
+                try {
+                    const res = await fetch(`/api/app-requests?clientId=${userData.id}`);
+                    const data = await res.json();
+                    if (data.requests) {
+                        setPendingRequests(data.requests.filter((r: AppRequest) => r.status === 'pending'));
+                    }
+                } catch (e) {
+                    console.log('Could not fetch requests:', e);
+                }
             }
 
         } catch (error) {
@@ -197,6 +219,21 @@ export default function DashboardPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Admin: add app to dashboard
+    const addToDashboard = (appId: string) => {
+        const newApps = [...adminDashboardApps, appId];
+        setAdminDashboardApps(newApps);
+        localStorage.setItem('admin_dashboard_apps', JSON.stringify(newApps));
+        setShowModal(false);
+    };
+
+    // Admin: remove app from dashboard
+    const removeFromDashboard = (appId: string) => {
+        const newApps = adminDashboardApps.filter(id => id !== appId);
+        setAdminDashboardApps(newApps);
+        localStorage.setItem('admin_dashboard_apps', JSON.stringify(newApps));
     };
 
     const handleLogout = () => {
@@ -333,8 +370,80 @@ export default function DashboardPage() {
 
                 {/* Applications Grid */}
                 <div className="dashboard-apps-grid">
-                    {/* Apps que l'utilisateur possède */}
-                    {userApps.map((app) => (
+                    {/* Admin: Apps selected for dashboard */}
+                    {isAdmin && adminDashboardApps.map((appId) => {
+                        const app = ALL_APPS[appId];
+                        if (!app) return null;
+                        return (
+                            <div key={app.id} className="dashboard-app-card" style={{ position: 'relative' }}>
+                                {/* X button to remove */}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); removeFromDashboard(app.id); }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '12px',
+                                        right: '12px',
+                                        background: 'rgba(239, 68, 68, 0.2)',
+                                        border: 'none',
+                                        borderRadius: '50%',
+                                        width: '28px',
+                                        height: '28px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        color: '#fca5a5',
+                                        zIndex: 10,
+                                    }}
+                                    title="Retirer du dashboard"
+                                >
+                                    <X size={14} />
+                                </button>
+                                <div className="dashboard-app-icon">
+                                    {app.icon}
+                                </div>
+                                <div className="dashboard-app-content">
+                                    <h3 className="dashboard-app-name">{app.name}</h3>
+                                    <p className="dashboard-app-desc">{app.description}</p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                    <button
+                                        onClick={() => app.externalDemo ? window.open(app.demoHref, '_blank') : router.push(app.demoHref || app.href)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            background: 'rgba(139, 92, 246, 0.2)',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#a78bfa',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        ▶ Démo
+                                    </button>
+                                    <button
+                                        onClick={() => app.externalDemo ? window.open(app.href, '_blank') : router.push(app.href)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            background: 'rgba(16, 185, 129, 0.2)',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            color: '#6ee7b7',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        🚀 Standard
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Regular user: Apps they own */}
+                    {!isAdmin && userApps.map((app) => (
                         <button
                             key={app.id}
                             onClick={() => handleAppClick(app)}
@@ -358,8 +467,8 @@ export default function DashboardPage() {
                         </button>
                     ))}
 
-                    {/* Apps en attente */}
-                    {pendingRequests.map((req) => {
+                    {/* Apps en attente (non-admin only) */}
+                    {!isAdmin && pendingRequests.map((req) => {
                         const app = ALL_APPS[req.app_id];
                         if (!app) return null;
                         return (
@@ -402,13 +511,26 @@ export default function DashboardPage() {
                         </button>
 
                         {!selectedApp ? (
-                            // Liste des apps disponibles (exclure celles que l'utilisateur possède déjà)
+                            // Liste des apps disponibles
                             <>
-                                <h2 className="dashboard-modal-title">Nos Services IA</h2>
-                                <p className="dashboard-modal-subtitle">Testez gratuitement ou débloquez l'accès illimité</p>
+                                <h2 className="dashboard-modal-title">{isAdmin ? 'Ajouter un Service' : 'Nos Services IA'}</h2>
+                                <p className="dashboard-modal-subtitle">
+                                    {isAdmin ? 'Choisissez les services à afficher sur votre dashboard' : 'Testez gratuitement ou débloquez l\'accès illimité'}
+                                </p>
                                 <div className="dashboard-modal-apps">
                                     {Object.values(ALL_APPS)
-                                        .filter(app => !userApps.some(a => a.id === app.id))
+                                        .filter(app => isAdmin
+                                            ? !adminDashboardApps.includes(app.id)  // Admin: apps not yet on dashboard
+                                            : !userApps.some(a => a.id === app.id)  // Regular: apps not owned
+                                        )
+                                        .sort((a, b) => {
+                                            // Sort: apps with demo first
+                                            const aHasDemo = a.demoHref && a.demoHref !== '#';
+                                            const bHasDemo = b.demoHref && b.demoHref !== '#';
+                                            if (aHasDemo && !bHasDemo) return -1;
+                                            if (!aHasDemo && bHasDemo) return 1;
+                                            return 0;
+                                        })
                                         .map(app => (
                                             <div key={app.id} className="dashboard-modal-app-row">
                                                 <div className="dashboard-modal-app-info">
@@ -419,11 +541,50 @@ export default function DashboardPage() {
                                                     </div>
                                                 </div>
                                                 <div className="dashboard-modal-app-actions">
-                                                    {hasPendingRequest(app.id) ? (
+                                                    {isAdmin ? (
+                                                        // Admin: Add to dashboard + Demo/Standard
+                                                        <>
+                                                            {app.demoHref && app.demoHref !== '#' && (
+                                                                <button
+                                                                    className="dashboard-modal-mini-btn demo"
+                                                                    onClick={() => {
+                                                                        if (app.externalDemo) {
+                                                                            window.open(app.demoHref, '_blank');
+                                                                        } else {
+                                                                            router.push(app.demoHref!);
+                                                                        }
+                                                                        setShowModal(false);
+                                                                    }}
+                                                                >
+                                                                    ▶ Démo
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                className="dashboard-modal-mini-btn"
+                                                                style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7' }}
+                                                                onClick={() => {
+                                                                    if (app.externalDemo) {
+                                                                        window.open(app.href, '_blank');
+                                                                    } else {
+                                                                        router.push(app.href);
+                                                                    }
+                                                                    setShowModal(false);
+                                                                }}
+                                                            >
+                                                                🚀 Standard
+                                                            </button>
+                                                            <button
+                                                                className="dashboard-modal-mini-btn request"
+                                                                onClick={() => addToDashboard(app.id)}
+                                                            >
+                                                                + Ajouter
+                                                            </button>
+                                                        </>
+                                                    ) : hasPendingRequest(app.id) ? (
                                                         <span className="pending-badge">Demande en cours</span>
                                                     ) : (
+                                                        // Regular user: Demo + Débloquer
                                                         <>
-                                                            {/* Afficher bouton démo seulement si une démo existe */}
                                                             {app.demoHref && app.demoHref !== '#' && (
                                                                 <button
                                                                     className="dashboard-modal-mini-btn demo"
