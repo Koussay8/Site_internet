@@ -14,3 +14,10 @@ GROQ_API_KEY=votre_cle_groq
 # OCR API (PaddleOCR sur HuggingFace)
 
 OCR_API_URL=<https://external8-cv-profiler-ocr.hf.space/api/predict>
+
+# WhatsApp Bot Backend (Railway)
+
+# Ces variables sont nécessaires pour l'intégration du module WhatsApp Bots
+
+WHATSAPP_BOT_API_URL=<https://votre-app.railway.app>
+WHATSAPP_BOT_ADMIN_SECRET=votre-secret-admin-securise

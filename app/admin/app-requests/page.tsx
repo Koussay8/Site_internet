@@ -173,7 +173,7 @@ export default function AdminAppRequestsPage() {
                 </div>
 
                 {/* Navigation */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
                     <span
                         style={{
                             padding: '8px 16px',
@@ -200,6 +200,21 @@ export default function AdminAppRequestsPage() {
                         }}
                     >
                         👥 Utilisateurs
+                    </a>
+                    <a
+                        href="/admin/whatsapp-bots"
+                        style={{
+                            padding: '8px 16px',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: 'white',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            textDecoration: 'none',
+                        }}
+                    >
+                        🤖 WhatsApp Bots
                     </a>
                 </div>
 
