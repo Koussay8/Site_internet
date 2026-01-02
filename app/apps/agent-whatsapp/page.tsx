@@ -61,6 +61,12 @@ export default function AgentWhatsAppPage() {
     const [knowledgeText, setKnowledgeText] = useState('');
     const [showAdvanced, setShowAdvanced] = useState(false);
 
+    // Activation modes
+    const [activateOnReceive, setActivateOnReceive] = useState(true);
+    const [activateOnSend, setActivateOnSend] = useState(false);
+    const [receiveFromNumbers, setReceiveFromNumbers] = useState('');
+    const [sendToNumbers, setSendToNumbers] = useState('');
+
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState<string | null>(null);
     const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
@@ -197,6 +203,14 @@ export default function AgentWhatsAppPage() {
                         knowledge: knowledgeEntries.length > 0 ? knowledgeEntries : undefined,
                         welcomeMessage: welcomeMessage.trim() || undefined,
                         language: 'fr',
+                        activateOnReceive,
+                        activateOnSend,
+                        receiveFromNumbers: receiveFromNumbers.trim()
+                            ? receiveFromNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
+                        sendToNumbers: sendToNumbers.trim()
+                            ? sendToNumbers.split(',').map(n => n.trim()).filter(Boolean)
+                            : [],
                     },
                 }),
             });
@@ -208,6 +222,10 @@ export default function AgentWhatsAppPage() {
                 setWelcomeMessage('');
                 setKnowledgeText('');
                 setShowAdvanced(false);
+                setActivateOnReceive(true);
+                setActivateOnSend(false);
+                setReceiveFromNumbers('');
+                setSendToNumbers('');
                 await loadBots();
             } else {
                 const error = await response.json();
@@ -543,6 +561,85 @@ export default function AgentWhatsAppPage() {
                                             resize: 'vertical',
                                         }}
                                     />
+                                </div>
+
+                                {/* Activation Modes */}
+                                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <label style={{ display: 'block', color: '#a78bfa', fontSize: '14px', marginBottom: '12px', fontWeight: 600 }}>
+                                        🎯 Modes d&apos;activation vocale
+                                    </label>
+
+                                    {/* Activate on Receive */}
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={activateOnReceive}
+                                                onChange={(e) => setActivateOnReceive(e.target.checked)}
+                                                style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                            />
+                                            <span style={{ color: 'white', fontSize: '14px' }}>
+                                                📥 Activation à la réception
+                                            </span>
+                                        </label>
+                                        {activateOnReceive && (
+                                            <input
+                                                type="text"
+                                                value={receiveFromNumbers}
+                                                onChange={(e) => setReceiveFromNumbers(e.target.value)}
+                                                placeholder="Numéros sources (ex: 33612345678, 33698765432) - Vide = tous"
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: '8px',
+                                                    marginLeft: '28px',
+                                                    padding: '10px 12px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '8px',
+                                                    color: 'white',
+                                                    fontSize: '12px',
+                                                    outline: 'none',
+                                                    maxWidth: 'calc(100% - 28px)',
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Activate on Send */}
+                                    <div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={activateOnSend}
+                                                onChange={(e) => setActivateOnSend(e.target.checked)}
+                                                style={{ width: '18px', height: '18px', accentColor: '#8B5CF6' }}
+                                            />
+                                            <span style={{ color: 'white', fontSize: '14px' }}>
+                                                📤 Activation à l&apos;envoi
+                                            </span>
+                                        </label>
+                                        {activateOnSend && (
+                                            <input
+                                                type="text"
+                                                value={sendToNumbers}
+                                                onChange={(e) => setSendToNumbers(e.target.value)}
+                                                placeholder="Numéros destinataires (ex: 33612345678) - Vide = tous"
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: '8px',
+                                                    marginLeft: '28px',
+                                                    padding: '10px 12px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    borderRadius: '8px',
+                                                    color: 'white',
+                                                    fontSize: '12px',
+                                                    outline: 'none',
+                                                    maxWidth: 'calc(100% - 28px)',
+                                                }}
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
