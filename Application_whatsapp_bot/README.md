@@ -14,7 +14,7 @@ Bot WhatsApp **100% gratuit** qui transforme vos messages vocaux en factures PDF
 ## 📦 Stack Technique (Gratuit)
 
 | Composant | Technologie | Limite gratuite |
-|-----------|-------------|-----------------|
+| :--- | :--- | :--- |
 | WhatsApp | Baileys (open source) | Illimité |
 | Transcription | Groq Whisper API | ~14,400/jour |
 | IA Parsing | Groq LLaMA 3 | ~14,400/jour |
@@ -63,6 +63,65 @@ npm start
 
 Un QR code s'affichera. Scannez-le avec WhatsApp (Appareils connectés > Connecter un appareil).
 
+## ☁️ Déploiement sur Google Cloud (Gratuit & 24/7)
+
+Idéal pour que le bot fonctionne tout le temps, sans garder votre ordinateur allumé.
+
+### 1. Créer une machine virtuelle (VM)
+
+1. Allez sur **Google Cloud Console > Compute Engine > Instances de VM**.
+2. Cliquez sur **Créer une instance**.
+3. **Configuration recommandée** :
+   - Nom : `whatsapp-bot`
+   - Région : **`us-central1`** (Iowa) ou **`us-east1`** (South Carolina).
+     > ⚠️ **IMPORTANT** : Vous devez choisir une région **US** (comme `us-central1`) pour que la machine soit **GRATUITE**. Si vous choisissez "Europe", vous paierez environ 7€/mois.
+     > Ne vous inquiétez pas, le bot fonctionnera parfaitement pour vous en Europe (la vitesse est la même pour WhatsApp).
+   - Type de machine : `e2-micro` (2 vCPU, 1 Go mémoire) - *Cherchez l'étiquette "Mensuel gratuit" ou "Free tier"*.
+   - Disque de démarrage : **Debian** ou **Ubuntu**.
+   - Pare-feu : Cochez "Autoriser le trafic HTTP/HTTPS".
+4. Cliquez sur **Créer**.
+
+### 2. Installation automatique
+
+1. Une fois la VM créée, cliquez sur le bouton **SSH** pour ouvrir le terminal.
+2. Copiez-collez ces commandes (l'une après l'autre) :
+
+```bash
+# 1. Télécharger le script d'installation
+wget https://raw.githubusercontent.com/VOTRE_USER/VOTRE_REPO/main/gcp-setup.sh
+
+# 2. Lancer l'installation (dure ~2 minutes)
+sudo chmod +x gcp-setup.sh
+sudo ./gcp-setup.sh
+
+# 3. Cloner votre code (si pas fait via git)
+git clone https://github.com/VOTRE_USER/VOTRE_REPO.git bot
+cd bot
+
+# 4. Installer les dépendances du projet
+npm install
+
+# 5. Configurer les variables d'environnement
+nano .env
+# (Collez vos clés API ici, puis Ctrl+X, Y, Entrée pour sauvegarder)
+
+# 6. Démarrer le bot avec PM2 (reboot automatique)
+pm2 start src/index.js --name "whatsapp-bot"
+pm2 save
+pm2 startup
+```
+
+### 3. Connexion
+
+1. Une fois lancé, affichez les logs pour voir le QR Code :
+
+   ```bash
+   pm2 logs whatsapp-bot
+   ```
+
+2. Scannez le QR Code avec votre téléphone.
+3. Pour quitter les logs sans arrêter le bot : `Ctrl + C`.
+
 ## 📱 Utilisation
 
 1. Envoyez un message vocal au numéro WhatsApp connecté
@@ -77,7 +136,7 @@ Un QR code s'affichera. Scannez-le avec WhatsApp (Appareils connectés > Connect
 
 ## 🎤 Exemples de messages vocaux
 
-```
+```text
 "Facture pour Marie Martin, formation IA, deux mille euros"
 
 "Facture client Entreprise ABC, email contact@abc.com, 
@@ -89,7 +148,7 @@ trois cent cinquante euros"
 
 ## 📁 Structure du projet
 
-```
+```bash
 bot/
 ├── .env                    # Configuration (secrets)
 ├── package.json            # Dépendances
