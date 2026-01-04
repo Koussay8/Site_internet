@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyEmailQuick, generateVerificationCode } from '@/lib/email-verifier';
-import { sendEmail, emailTemplates } from '@/lib/email-sender';
+import { sendTransactionalEmail, emailTemplates } from '@/lib/email-sender';
 
 export async function POST(request: NextRequest) {
     try {
@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
             })
             .eq('email', normalizedEmail);
 
-        // 6. Envoyer le code par email via Postal
-        const emailResult = await sendEmail({
+        // 6. Envoyer le code par email via Google Apps Script (meilleure délivrabilité)
+        const emailResult = await sendTransactionalEmail({
             to: normalizedEmail,
             subject: 'Vérifiez votre email - NovaSolutions',
             html: emailTemplates.verificationCode(verificationCode),
