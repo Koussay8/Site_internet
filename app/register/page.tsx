@@ -4,24 +4,28 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+type Step = 'form' | 'verification';
+
 export default function RegisterPage() {
     const router = useRouter();
+    const [step, setStep] = useState<Step>('form');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [companyName, setCompanyName] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    // Étape 1: Soumettre le formulaire d'inscription
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
         setSuccess('');
 
-        // Validate passwords match
         if (password !== confirmPassword) {
             setError('Les mots de passe ne correspondent pas');
             setIsLoading(false);
@@ -47,18 +51,9 @@ export default function RegisterPage() {
                 throw new Error(data.error || 'Erreur lors de l\'inscription');
             }
 
-            if (data.needsConfirmation) {
-                setSuccess('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
-            } else {
-                // Auto-login if no confirmation needed
-                if (data.token) {
-                    localStorage.setItem('auth_token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = '/dashboard';
-                } else {
-                    setSuccess('Compte créé ! Vous pouvez maintenant vous connecter.');
-                    setTimeout(() => router.push('/login'), 2000);
-                }
+            if (data.needsVerification) {
+                setSuccess('Un code de vérification a été envoyé à votre email.');
+                setStep('verification');
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -67,13 +62,77 @@ export default function RegisterPage() {
         }
     };
 
+    // Étape 2: Vérifier le code
+    const handleVerifyCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/auth/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    code: verificationCode,
+                    password,
+                    companyName,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Code invalide');
+            }
+
+            // Succès - sauvegarder le token et rediriger
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = '/dashboard';
+            } else {
+                setSuccess('Compte créé ! Vous pouvez maintenant vous connecter.');
+                setTimeout(() => router.push('/login'), 2000);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Code invalide');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Renvoyer le code
+    const handleResendCode = async () => {
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, companyName }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSuccess('Un nouveau code a été envoyé.');
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erreur');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="login-page">
-            {/* Background effects */}
             <div className="hero-bg"></div>
 
             <div className="login-container">
-                {/* Back link */}
                 <Link href="/" className="back-link">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -81,23 +140,36 @@ export default function RegisterPage() {
                     Retour à l&apos;accueil
                 </Link>
 
-                {/* Register Card */}
                 <div className="login-card">
                     {/* Icon */}
                     <div className="login-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                            <circle cx="8.5" cy="7" r="4" />
-                            <line x1="20" y1="8" x2="20" y2="14" />
-                            <line x1="23" y1="11" x2="17" y2="11" />
-                        </svg>
+                        {step === 'form' ? (
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="8.5" cy="7" r="4" />
+                                <line x1="20" y1="8" x2="20" y2="14" />
+                                <line x1="23" y1="11" x2="17" y2="11" />
+                            </svg>
+                        ) : (
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg>
+                        )}
                     </div>
 
                     {/* Title */}
-                    <h1 className="login-title">Créer un compte</h1>
-                    <p className="login-subtitle">Rejoignez NovaSolutions</p>
+                    <h1 className="login-title">
+                        {step === 'form' ? 'Créer un compte' : 'Vérifiez votre email'}
+                    </h1>
+                    <p className="login-subtitle">
+                        {step === 'form'
+                            ? 'Rejoignez NovaSolutions'
+                            : `Code envoyé à ${email}`
+                        }
+                    </p>
 
-                    {/* Error message */}
+                    {/* Error */}
                     {error && (
                         <div className="error-message">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -109,7 +181,7 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    {/* Success message */}
+                    {/* Success */}
                     {success && (
                         <div className="success-message">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -120,135 +192,165 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="login-form">
-                        {/* Company Name */}
-                        <div className="form-group">
-                            <label htmlFor="companyName">Nom de l&apos;entreprise</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                                    <polyline points="9 22 9 12 15 12 15 22" />
-                                </svg>
-                                <input
-                                    id="companyName"
-                                    type="text"
-                                    value={companyName}
-                                    onChange={(e) => setCompanyName(e.target.value)}
-                                    placeholder="Mon Entreprise"
-                                    autoComplete="organization"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Email */}
-                        <div className="form-group">
-                            <label htmlFor="email">Email *</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                    <polyline points="22,6 12,13 2,6" />
-                                </svg>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    placeholder="votre@email.com"
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password */}
-                        <div className="form-group">
-                            <label htmlFor="password">Mot de passe *</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    placeholder="••••••••"
-                                    autoComplete="new-password"
-                                    minLength={6}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="toggle-password"
-                                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                                >
-                                    {showPassword ? (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                            <line x1="1" y1="1" x2="23" y2="23" />
-                                        </svg>
-                                    ) : (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
-                            <span className="hint">Minimum 6 caractères</span>
-                        </div>
-
-                        {/* Confirm Password */}
-                        <div className="form-group">
-                            <label htmlFor="confirmPassword">Confirmer le mot de passe *</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                                <input
-                                    id="confirmPassword"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required
-                                    placeholder="••••••••"
-                                    autoComplete="new-password"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Submit button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="btn btn-primary"
-                            style={{ width: '100%', marginTop: '0.5rem' }}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    {/* Form - Step 1 */}
+                    {step === 'form' && (
+                        <form onSubmit={handleSubmit} className="login-form">
+                            <div className="form-group">
+                                <label htmlFor="companyName">Nom de l&apos;entreprise</label>
+                                <div className="input-wrapper">
+                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                        <polyline points="9 22 9 12 15 12 15 22" />
                                     </svg>
-                                    Création en cours...
-                                </>
-                            ) : (
-                                'Créer mon compte'
-                            )}
-                        </button>
-                    </form>
+                                    <input
+                                        id="companyName"
+                                        type="text"
+                                        value={companyName}
+                                        onChange={(e) => setCompanyName(e.target.value)}
+                                        placeholder="Mon Entreprise"
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Login link */}
+                            <div className="form-group">
+                                <label htmlFor="email">Email *</label>
+                                <div className="input-wrapper">
+                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                        <polyline points="22,6 12,13 2,6" />
+                                    </svg>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        placeholder="votre@email.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="password">Mot de passe *</label>
+                                <div className="input-wrapper">
+                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        placeholder="••••••••"
+                                        minLength={6}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="toggle-password"
+                                    >
+                                        {showPassword ? '🙈' : '👁️'}
+                                    </button>
+                                </div>
+                                <span className="hint">Minimum 6 caractères</span>
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword">Confirmer le mot de passe *</label>
+                                <div className="input-wrapper">
+                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                    <input
+                                        id="confirmPassword"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="btn btn-primary"
+                                style={{ width: '100%', marginTop: '0.5rem' }}
+                            >
+                                {isLoading ? 'Vérification...' : 'Créer mon compte'}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* Verification - Step 2 */}
+                    {step === 'verification' && (
+                        <form onSubmit={handleVerifyCode} className="login-form">
+                            <div className="form-group">
+                                <label htmlFor="code">Code de vérification (6 chiffres)</label>
+                                <div className="input-wrapper">
+                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                    <input
+                                        id="code"
+                                        type="text"
+                                        value={verificationCode}
+                                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        required
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        style={{ letterSpacing: '8px', textAlign: 'center', fontSize: '1.5rem' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading || verificationCode.length !== 6}
+                                className="btn btn-primary"
+                                style={{ width: '100%', marginTop: '0.5rem' }}
+                            >
+                                {isLoading ? 'Vérification...' : 'Valider le code'}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleResendCode}
+                                disabled={isLoading}
+                                className="btn btn-outline"
+                                style={{ width: '100%', marginTop: '0.5rem' }}
+                            >
+                                Renvoyer le code
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setStep('form')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'rgba(255,255,255,0.6)',
+                                    cursor: 'pointer',
+                                    marginTop: '1rem',
+                                    width: '100%',
+                                }}
+                            >
+                                ← Modifier l&apos;email
+                            </button>
+                        </form>
+                    )}
+
                     <p className="login-link">
                         Déjà un compte ? <Link href="/login">Se connecter</Link>
                     </p>
 
-                    {/* Footer */}
                     <p className="login-footer">
-                        © 2024 NovaSolutions. Tous droits réservés.
+                        © 2025 NovaSolutions. Tous droits réservés.
                     </p>
                 </div>
             </div>
@@ -455,20 +557,7 @@ export default function RegisterPage() {
                     color: rgba(255, 255, 255, 0.4);
                     cursor: pointer;
                     padding: 0.25rem;
-                    transition: color 0.3s ease;
-                }
-
-                .toggle-password:hover {
-                    color: rgba(255, 255, 255, 0.8);
-                }
-
-                .spinner {
-                    animation: spin 1s linear infinite;
-                }
-
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
+                    font-size: 1.2rem;
                 }
 
                 .login-link {
@@ -484,10 +573,6 @@ export default function RegisterPage() {
                     font-weight: 500;
                 }
 
-                .login-link a:hover {
-                    text-decoration: underline;
-                }
-
                 .login-footer {
                     text-align: center;
                     color: rgba(255, 255, 255, 0.4);
@@ -498,10 +583,6 @@ export default function RegisterPage() {
                 @media (max-width: 640px) {
                     .login-card {
                         padding: 2rem 1.5rem;
-                    }
-
-                    .login-title {
-                        font-size: 1.75rem;
                     }
                 }
             `}</style>

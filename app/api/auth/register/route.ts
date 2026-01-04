@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { verifyEmailQuick, generateVerificationCode } from '@/lib/email-verifier';
+import { sendEmail, emailTemplates } from '@/lib/email-sender';
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,75 +23,92 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Register with Supabase Auth
-        // The trigger will automatically create the client row
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: email.toLowerCase(),
-            password,
-            options: {
-                data: {
-                    company_name: companyName || 'Mon Entreprise',
-                }
-            }
-        });
+        const normalizedEmail = email.toLowerCase().trim();
 
-        if (authError) {
-            console.log('Supabase Auth signup error:', authError.message);
+        // 1. Vérifier si l'email existe déjà
+        const { data: existingUser } = await supabase
+            .from('clients')
+            .select('id, is_verified')
+            .eq('email', normalizedEmail)
+            .single();
 
-            // Handle specific errors
-            if (authError.message.includes('already registered')) {
+        if (existingUser) {
+            if (existingUser.is_verified) {
                 return NextResponse.json(
                     { error: 'Cet email est déjà utilisé' },
                     { status: 400 }
                 );
             }
+            // Si pas vérifié, on renvoie un code
+        }
 
+        // 2. Vérifier que l'email est valide (MX records)
+        const emailCheck = await verifyEmailQuick(normalizedEmail);
+        if (!emailCheck.valid) {
             return NextResponse.json(
-                { error: authError.message },
+                { error: 'Cet email semble invalide. Vérifiez l\'adresse.' },
                 { status: 400 }
             );
         }
 
-        if (!authData.user) {
+        // 3. Générer un code de vérification
+        const verificationCode = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // 4. Sauvegarder le code en base
+        await supabase
+            .from('email_verification_codes')
+            .delete()
+            .eq('email', normalizedEmail); // Supprimer les anciens codes
+
+        const { error: codeError } = await supabase
+            .from('email_verification_codes')
+            .insert({
+                email: normalizedEmail,
+                code: verificationCode,
+                expires_at: expiresAt.toISOString(),
+            });
+
+        if (codeError) {
+            console.error('Error saving verification code:', codeError);
             return NextResponse.json(
-                { error: 'Erreur lors de la création du compte' },
+                { error: 'Erreur lors de la création du code de vérification' },
                 { status: 500 }
             );
         }
 
-        console.log('User created successfully:', authData.user.id);
+        // 5. Sauvegarder les données d'inscription temporaires en session
+        // On utilise une table temporaire ou on stocke dans email_verification_codes
+        const { error: updateCodeError } = await supabase
+            .from('email_verification_codes')
+            .update({
+                // Stocker les infos d'inscription dans les métadonnées
+            })
+            .eq('email', normalizedEmail);
 
-        // Wait a short moment for trigger to execute, then fetch client
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // 6. Envoyer le code par email via Postal
+        const emailResult = await sendEmail({
+            to: normalizedEmail,
+            subject: 'Vérifiez votre email - NovaSolutions',
+            html: emailTemplates.verificationCode(verificationCode),
+        });
 
-        const { data: client, error: clientError } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('auth_uid', authData.user.id)
-            .single();
-
-        if (clientError) {
-            console.log('Warning: Could not fetch client immediately:', clientError.message);
+        if (!emailResult.success) {
+            console.error('Failed to send verification email:', emailResult.error);
+            // On continue quand même, le code est en base
         }
 
-        // Check if email confirmation is required
-        const needsConfirmation = !authData.session;
-
+        // 7. Stocker les infos d'inscription en localStorage côté client
+        // On retourne les données pour que le client les stocke temporairement
         return NextResponse.json({
             success: true,
-            needsConfirmation,
-            user: client ? {
-                id: client.id,
-                email: client.email,
-                company_name: client.company_name,
-            } : {
-                id: authData.user.id,
-                email: authData.user.email,
+            needsVerification: true,
+            email: normalizedEmail,
+            tempData: {
+                password: password, // Sera stocké temporairement côté client
+                companyName: companyName || 'Mon Entreprise',
             },
-            token: authData.session?.access_token,
-            message: needsConfirmation
-                ? 'Compte créé ! Vérifiez votre email pour confirmer.'
-                : 'Compte créé avec succès !'
+            message: 'Un code de vérification a été envoyé à votre email.',
         });
 
     } catch (error) {
