@@ -1,30 +1,47 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Mail, Lock, ArrowRight, Check, Eye, EyeOff, Loader2, AlertCircle, Phone, Building } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { sendPhoneOTP, verifyPhoneOTP } from '@/lib/auth-helpers';
 
-type Step = 'form' | 'verification';
-
-export default function RegisterPage() {
+function RegisterPageContent() {
     const router = useRouter();
-    const [step, setStep] = useState<Step>('form');
+    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [focusedField, setFocusedField] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    // Email registration state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const [emailStep, setEmailStep] = useState<'form' | 'verification'>('form');
 
-    // Étape 1: Soumettre le formulaire d'inscription
-    const handleSubmit = async (e: React.FormEvent) => {
+    // Phone auth state
+    const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+    const [phone, setPhone] = useState('');
+    const [otp, setOtp] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [mockCode, setMockCode] = useState<string | null>(null);
+
+    // Check for errors in URL
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        if (errorParam) {
+            setError(decodeURIComponent(errorParam));
+        }
+    }, [searchParams]);
+
+    const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
-        setSuccess('');
+        setError(null);
 
         if (password !== confirmPassword) {
             setError('Les mots de passe ne correspondent pas');
@@ -52,21 +69,19 @@ export default function RegisterPage() {
             }
 
             if (data.needsVerification) {
-                setSuccess('Un code de vérification a été envoyé à votre email.');
-                setStep('verification');
+                setEmailStep('verification');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } catch (err: any) {
+            setError(err.message || 'Erreur lors de l\'inscription');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Étape 2: Vérifier le code
     const handleVerifyCode = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
+        setError(null);
 
         try {
             const response = await fetch('/api/auth/verify-code', {
@@ -86,506 +101,467 @@ export default function RegisterPage() {
                 throw new Error(data.error || 'Code invalide');
             }
 
-            // Succès - sauvegarder le token et rediriger
             if (data.token) {
                 localStorage.setItem('auth_token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = '/dashboard';
-            } else {
-                setSuccess('Compte créé ! Vous pouvez maintenant vous connecter.');
-                setTimeout(() => router.push('/login'), 2000);
+                router.push('/dashboard');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Code invalide');
+        } catch (err: any) {
+            setError(err.message || 'Code invalide');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Renvoyer le code
-    const handleResendCode = async () => {
+    const handlePhoneSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         setIsLoading(true);
-        setError('');
+        setError(null);
 
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, companyName }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setSuccess('Un nouveau code a été envoyé.');
+            if (!otpSent) {
+                // Step 1: Send OTP
+                const result = await sendPhoneOTP(phone);
+                setOtpSent(true);
+                if (result.mockCode) {
+                    setMockCode(result.mockCode);
+                }
+                setIsLoading(false);
             } else {
-                throw new Error(data.error);
+                // Step 2: Verify OTP
+                await verifyPhoneOTP(phone, otp);
+                router.push('/dashboard');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur');
-        } finally {
+        } catch (err: any) {
+            setError(err.message || 'Erreur lors de l\'inscription');
             setIsLoading(false);
         }
+    };
+
+    const resetPhoneAuth = () => {
+        setOtpSent(false);
+        setOtp('');
+        setMockCode(null);
+        setError(null);
     };
 
     return (
-        <div className="login-page">
-            <div className="hero-bg"></div>
+        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-orange-500/30 flex flex-col relative overflow-hidden">
 
-            <div className="login-container">
-                <Link href="/" className="back-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    Retour à l&apos;accueil
-                </Link>
-
-                <div className="login-card">
-                    {/* Icon */}
-                    <div className="login-icon">
-                        {step === 'form' ? (
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                <circle cx="8.5" cy="7" r="4" />
-                                <line x1="20" y1="8" x2="20" y2="14" />
-                                <line x1="23" y1="11" x2="17" y2="11" />
-                            </svg>
-                        ) : (
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                <polyline points="22,6 12,13 2,6" />
-                            </svg>
-                        )}
-                    </div>
-
-                    {/* Title */}
-                    <h1 className="login-title">
-                        {step === 'form' ? 'Créer un compte' : 'Vérifiez votre email'}
-                    </h1>
-                    <p className="login-subtitle">
-                        {step === 'form'
-                            ? 'Rejoignez NovaSolutions'
-                            : `Code envoyé à ${email}`
-                        }
-                    </p>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="error-message">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="8" x2="12" y2="12" />
-                                <line x1="12" y1="16" x2="12.01" y2="16" />
-                            </svg>
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Success */}
-                    {success && (
-                        <div className="success-message">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                            {success}
-                        </div>
-                    )}
-
-                    {/* Form - Step 1 */}
-                    {step === 'form' && (
-                        <form onSubmit={handleSubmit} className="login-form">
-                            <div className="form-group">
-                                <label htmlFor="companyName">Nom de l&apos;entreprise</label>
-                                <div className="input-wrapper">
-                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                                        <polyline points="9 22 9 12 15 12 15 22" />
-                                    </svg>
-                                    <input
-                                        id="companyName"
-                                        type="text"
-                                        value={companyName}
-                                        onChange={(e) => setCompanyName(e.target.value)}
-                                        placeholder="Mon Entreprise"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="email">Email *</label>
-                                <div className="input-wrapper">
-                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                        <polyline points="22,6 12,13 2,6" />
-                                    </svg>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        placeholder="votre@email.com"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="password">Mot de passe *</label>
-                                <div className="input-wrapper">
-                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                    <input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        placeholder="••••••••"
-                                        minLength={6}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="toggle-password"
-                                    >
-                                        {showPassword ? '🙈' : '👁️'}
-                                    </button>
-                                </div>
-                                <span className="hint">Minimum 6 caractères</span>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="confirmPassword">Confirmer le mot de passe *</label>
-                                <div className="input-wrapper">
-                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                    <input
-                                        id="confirmPassword"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                        placeholder="••••••••"
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="btn btn-primary"
-                                style={{ width: '100%', marginTop: '0.5rem' }}
-                            >
-                                {isLoading ? 'Vérification...' : 'Créer mon compte'}
-                            </button>
-                        </form>
-                    )}
-
-                    {/* Verification - Step 2 */}
-                    {step === 'verification' && (
-                        <form onSubmit={handleVerifyCode} className="login-form">
-                            <div className="form-group">
-                                <label htmlFor="code">Code de vérification (6 chiffres)</label>
-                                <div className="input-wrapper">
-                                    <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                    <input
-                                        id="code"
-                                        type="text"
-                                        value={verificationCode}
-                                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        required
-                                        placeholder="000000"
-                                        maxLength={6}
-                                        style={{ letterSpacing: '8px', textAlign: 'center', fontSize: '1.5rem' }}
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isLoading || verificationCode.length !== 6}
-                                className="btn btn-primary"
-                                style={{ width: '100%', marginTop: '0.5rem' }}
-                            >
-                                {isLoading ? 'Vérification...' : 'Valider le code'}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleResendCode}
-                                disabled={isLoading}
-                                className="btn btn-outline"
-                                style={{ width: '100%', marginTop: '0.5rem' }}
-                            >
-                                Renvoyer le code
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setStep('form')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'rgba(255,255,255,0.6)',
-                                    cursor: 'pointer',
-                                    marginTop: '1rem',
-                                    width: '100%',
-                                }}
-                            >
-                                ← Modifier l&apos;email
-                            </button>
-                        </form>
-                    )}
-
-                    <p className="login-link">
-                        Déjà un compte ? <Link href="/login">Se connecter</Link>
-                    </p>
-
-                    <p className="login-footer">
-                        © 2025 NovaSolutions. Tous droits réservés.
-                    </p>
-                </div>
+            {/* Background Ambience */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow delay-1000"></div>
             </div>
 
-            <style jsx>{`
-                .login-page {
-                    position: relative;
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 2rem;
-                    overflow: hidden;
-                }
+            {/* Header */}
+            <header className="absolute top-0 left-0 w-full z-50 p-6 md:px-12 flex justify-between items-center">
+                <Link href="/" className="flex items-center gap-3 group">
+                    <Image
+                        src="/logo-white.png"
+                        alt="Vextra Tech Logo"
+                        width={32}
+                        height={32}
+                        className="object-contain group-hover:scale-105 transition-transform"
+                    />
+                    <span className="font-bold text-lg tracking-tight group-hover:text-orange-100 transition-colors">Vextra Tech</span>
+                </Link>
+            </header>
 
-                .hero-bg {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(135deg, #0a0118 0%, #1a0f2e 50%, #0a0118 100%);
-                    z-index: -2;
-                }
+            <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+                <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
 
-                .hero-bg::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-                    background-size: 50px 50px;
-                    animation: grid-move 20s linear infinite;
-                }
+                    {/* Left Side */}
+                    <div className="hidden md:flex flex-col justify-center space-y-8 pr-12">
+                        <div>
+                            <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in-up">
+                                Nouveau Compte
+                            </span>
+                            <h1 className="text-5xl font-bold leading-tight mb-6 animate-fade-in-up delay-100">
+                                Rejoignez <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-100">Vextra Tech.</span>
+                            </h1>
+                            <p className="text-gray-400 text-lg leading-relaxed animate-fade-in-up delay-200">
+                                Créez votre compte et accédez à une suite complète d'outils IA pour transformer votre activité.
+                            </p>
+                        </div>
 
-                .hero-bg::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: 
-                        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
-                    z-index: -1;
-                }
+                        <div className="space-y-4 animate-fade-in-up delay-300">
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                                    <Check className="w-5 h-5 text-green-500" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white">Démarrage Rapide</p>
+                                    <p className="text-sm text-gray-500">Configuré en moins de 2 minutes</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                                    <Zap className="w-5 h-5 text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white">Essai Gratuit </p>
+                                    <p className="text-sm text-gray-500">Testez toutes les fonctionnalités</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                @keyframes grid-move {
-                    0% { transform: translate(0, 0); }
-                    100% { transform: translate(50px, 50px); }
-                }
+                    {/* Right Side: Form */}
+                    <div className="relative animate-fade-in-up delay-200">
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-purple-500/10 rounded-[30px] blur-xl transform scale-105"></div>
 
-                .login-container {
-                    position: relative;
-                    width: 100%;
-                    max-width: 440px;
-                    z-index: 1;
-                }
+                        <div className="bg-[#121214]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[30px] shadow-2xl relative">
+                            <div className="mb-8 text-center md:text-left">
+                                <h2 className="text-2xl font-bold mb-2">
+                                    {emailStep === 'verification' ? 'Vérifiez votre email' : 'Inscription'}
+                                </h2>
+                                <p className="text-gray-500 text-sm">
+                                    {emailStep === 'verification'
+                                        ? `Code envoyé à ${email}`
+                                        : 'Créez votre compte pour commencer'
+                                    }
+                                </p>
+                            </div>
 
-                .back-link {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    color: rgba(255, 255, 255, 0.6);
-                    text-decoration: none;
-                    font-size: 0.9rem;
-                    margin-bottom: 2rem;
-                    transition: all 0.3s ease;
-                }
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                    <p className="text-sm text-red-300">{error}</p>
+                                </div>
+                            )}
 
-                .back-link:hover {
-                    color: white;
-                    transform: translateX(-4px);
-                }
+                            {mockCode && (
+                                <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+                                    <p className="text-sm text-orange-300">
+                                        <span className="font-bold">Code OTP (DEV):</span> {mockCode}
+                                    </p>
+                                </div>
+                            )}
 
-                .login-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 24px;
-                    padding: 3rem 2.5rem;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                }
+                            {/* Only show tabs if not in email verification step */}
+                            {emailStep === 'form' && (
+                                <div className="flex gap-2 mb-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAuthMethod('email'); resetPhoneAuth(); }}
+                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === 'email'
+                                                ? 'bg-orange-500 text-white'
+                                                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        Email
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAuthMethod('phone'); setError(null); }}
+                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === 'phone'
+                                                ? 'bg-orange-500 text-white'
+                                                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        Téléphone
+                                    </button>
+                                </div>
+                            )}
 
-                .login-icon {
-                    width: 80px;
-                    height: 80px;
-                    margin: 0 auto 1.5rem;
-                    background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-                }
+                            {/* Email Form - Step 1 */}
+                            {authMethod === 'email' && emailStep === 'form' && (
+                                <form onSubmit={handleEmailSubmit} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'companyName' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Nom de l'entreprise
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'companyName' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Building className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Mon Entreprise"
+                                                value={companyName}
+                                                onChange={(e) => setCompanyName(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('companyName')}
+                                                onBlur={() => setFocusedField(null)}
+                                            />
+                                        </div>
+                                    </div>
 
-                .login-icon svg {
-                    color: white;
-                }
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'email' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Email *
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'email' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Mail className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type="email"
+                                                placeholder="nom@entreprise.com"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('email')}
+                                                onBlur={() => setFocusedField(null)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
 
-                .login-title {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    text-align: center;
-                    margin-bottom: 0.5rem;
-                    color: white;
-                }
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'password' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Mot de passe *
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'password' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Lock className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="••••••••"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('password')}
+                                                onBlur={() => setFocusedField(null)}
+                                                required
+                                                minLength={6}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="pr-4 text-gray-500 hover:text-white transition-colors focus:outline-none"
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-500 ml-1">Minimum 6 caractères</p>
+                                    </div>
 
-                .login-subtitle {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.6);
-                    margin-bottom: 2rem;
-                }
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'confirmPassword' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Confirmer le mot de passe *
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'confirmPassword' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Lock className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="••••••••"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('confirmPassword')}
+                                                onBlur={() => setFocusedField(null)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
 
-                .error-message {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    padding: 1rem;
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.3);
-                    border-radius: 12px;
-                    color: #fca5a5;
-                    margin-bottom: 1.5rem;
-                    font-size: 0.9rem;
-                }
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Création...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Créer mon compte
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            )}
 
-                .success-message {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    padding: 1rem;
-                    background: rgba(16, 185, 129, 0.1);
-                    border: 1px solid rgba(16, 185, 129, 0.3);
-                    border-radius: 12px;
-                    color: #6ee7b7;
-                    margin-bottom: 1.5rem;
-                    font-size: 0.9rem;
-                }
+                            {/* Email Verification Step */}
+                            {authMethod === 'email' && emailStep === 'verification' && (
+                                <form onSubmit={handleVerifyCode} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'code' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Code de vérification
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'code' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <input
+                                                type="text"
+                                                placeholder="123456"
+                                                value={verificationCode}
+                                                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none text-center text-2xl tracking-widest"
+                                                onFocus={() => setFocusedField('code')}
+                                                onBlur={() => setFocusedField(null)}
+                                                maxLength={6}
+                                                required
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 ml-1">6 chiffres envoyés par email</p>
+                                    </div>
 
-                .login-form {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.25rem;
-                }
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading || verificationCode.length !== 6}
+                                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Vérification...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Valider et se connecter
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
 
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmailStep('form')}
+                                        className="w-full text-sm text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        ← Modifier l'email
+                                    </button>
+                                </form>
+                            )}
 
-                .form-group label {
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    color: rgba(255, 255, 255, 0.9);
-                }
+                            {/* Phone Form */}
+                            {authMethod === 'phone' && (
+                                <form onSubmit={handlePhoneSubmit} className="space-y-6">
+                                    {!otpSent ? (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'phone' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                    Numéro de téléphone
+                                                </label>
+                                                <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'phone' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                                    <div className="pl-4 text-gray-500">
+                                                        <Phone className="w-5 h-5" />
+                                                    </div>
+                                                    <input
+                                                        type="tel"
+                                                        placeholder="+33 6 12 34 56 78"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                        onFocus={() => setFocusedField('phone')}
+                                                        onBlur={() => setFocusedField(null)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-1">Format international: +33...</p>
+                                            </div>
 
-                .hint {
-                    font-size: 0.75rem;
-                    color: rgba(255, 255, 255, 0.4);
-                }
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                                        Envoi...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Envoyer le code
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </>
+                                                )}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'otp' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                    Code de vérification
+                                                </label>
+                                                <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'otp' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="123456"
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none text-center text-2xl tracking-widest"
+                                                        onFocus={() => setFocusedField('otp')}
+                                                        onBlur={() => setFocusedField(null)}
+                                                        maxLength={6}
+                                                        required
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-1">Code envoyé à {phone}</p>
+                                            </div>
 
-                .input-wrapper {
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                }
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                                        Vérification...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Vérifier et créer le compte
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </>
+                                                )}
+                                            </button>
 
-                .input-icon {
-                    position: absolute;
-                    left: 1rem;
-                    color: rgba(255, 255, 255, 0.4);
-                    pointer-events: none;
-                }
+                                            <button
+                                                type="button"
+                                                onClick={resetPhoneAuth}
+                                                className="w-full text-sm text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                ← Modifier le numéro
+                                            </button>
+                                        </>
+                                    )}
+                                </form>
+                            )}
 
-                .input-wrapper input {
-                    width: 100%;
-                    padding: 0.875rem 1rem 0.875rem 3rem;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
-                    color: white;
-                    font-size: 1rem;
-                    transition: all 0.3s ease;
-                }
-
-                .input-wrapper input::placeholder {
-                    color: rgba(255, 255, 255, 0.3);
-                }
-
-                .input-wrapper input:focus {
-                    outline: none;
-                    border-color: #10b981;
-                    background: rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-                }
-
-                .toggle-password {
-                    position: absolute;
-                    right: 1rem;
-                    background: none;
-                    border: none;
-                    color: rgba(255, 255, 255, 0.4);
-                    cursor: pointer;
-                    padding: 0.25rem;
-                    font-size: 1.2rem;
-                }
-
-                .login-link {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 0.9rem;
-                    margin-top: 1.5rem;
-                }
-
-                .login-link a {
-                    color: #10b981;
-                    text-decoration: none;
-                    font-weight: 500;
-                }
-
-                .login-footer {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.4);
-                    font-size: 0.85rem;
-                    margin-top: 1.5rem;
-                }
-
-                @media (max-width: 640px) {
-                    .login-card {
-                        padding: 2rem 1.5rem;
-                    }
-                }
-            `}</style>
+                            {/* Footer */}
+                            <p className="text-center text-gray-500 text-sm mt-6">
+                                Déjà un compte ?{' '}
+                                <Link href="/login" className="text-white font-semibold hover:text-orange-400 transition-colors">
+                                    Se connecter
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    );
+}
+
+// Wrapper with Suspense boundary
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+            </div>
+        }>
+            <RegisterPageContent />
+        </Suspense>
+    );
+}
+
+// Helper components
+function Zap({ className }: { className?: string }) {
+    return (
+        <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
     );
 }

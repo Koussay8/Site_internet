@@ -1,693 +1,268 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Users, Loader2, ArrowRight, LogOut, Sparkles, Plus, X, Mic, Calendar, ExternalLink, Play, MessageSquare, Mail, Globe, FileText, Box, Video, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import {
+    ArrowUpRight,
+    MessageSquare,
+    Clock,
+    Users,
+    MoreHorizontal,
+    Play,
+    Pause,
+    Zap,
+    Sparkles,
+    ArrowRight
+} from 'lucide-react';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer
+} from 'recharts';
 
-interface User {
-    id: string;
-    email: string;
-    company_name?: string;
-    applications?: string[];
-}
+// Mock Data for the chart
+const data = [
+    { name: 'Lun', leads: 400, conversations: 240 },
+    { name: 'Mar', leads: 300, conversations: 139 },
+    { name: 'Mer', leads: 500, conversations: 380 },
+    { name: 'Jeu', leads: 280, conversations: 390 },
+    { name: 'Ven', leads: 590, conversations: 480 },
+    { name: 'Sam', leads: 430, conversations: 300 },
+    { name: 'Dim', leads: 450, conversations: 430 },
+];
 
-interface Application {
-    id: string;
-    name: string;
-    description: string;
-    icon: React.ReactNode;
-    href: string;
-    demoHref?: string;
-    externalDemo?: boolean;
-}
-
-interface AppRequest {
-    id: string;
-    app_id: string;
-    status: 'pending' | 'approved' | 'rejected';
-    created_at: string;
-}
-
-const ALL_APPS: Record<string, Application> = {
-    'agent-whatsapp': {
-        id: 'agent-whatsapp',
-        name: 'Agent WhatsApp',
-        description: 'Bot WhatsApp intelligent pour votre entreprise. Transcription vocale, facturation auto, et réponses IA 24h/24.',
-        icon: <MessageCircle className="w-8 h-8" />,
-        href: '/apps/agent-whatsapp',
-        demoHref: '/apps/agent-whatsapp?demo=true',
+// Mock Data for services
+const services = [
+    {
+        id: 1,
+        name: "Chatbot Support Client",
+        type: "Customer Service",
+        status: "active",
+        metrics: "240 conv/jour",
+        lastActive: "À l'instant",
+        icon: MessageSquare,
+        color: "text-blue-500",
+        bg: "bg-blue-500/10"
     },
-    'cv-profiler': {
-        id: 'cv-profiler',
-        name: 'CV Profiler',
-        description: 'Recrutez 3x plus vite. L\'IA analyse, trie et matche automatiquement vos CVs avec vos postes.',
-        icon: <Users className="w-8 h-8" />,
-        href: '/cv-profiler',
-        demoHref: '/cv-profiler',
+    {
+        id: 2,
+        name: "Générateur de Leads",
+        type: "Sales Automation",
+        status: "active",
+        metrics: "45 leads/semaine",
+        lastActive: "Il y a 2m",
+        icon: Users,
+        color: "text-orange-500",
+        bg: "bg-orange-500/10"
     },
-    'agent-telephonique': {
-        id: 'agent-telephonique',
-        name: 'Agent Téléphonique IA 24/7',
-        description: 'Réceptionniste IA 24h/24 qui qualifie vos prospects et prend des RDV. Dupliquez votre propre voix ou choisissez parmi des centaines.',
-        icon: <Mic className="w-8 h-8" />,
-        href: 'https://aivoicedemo.vercel.app',
-        demoHref: 'https://aivoicedemo.vercel.app',
-        externalDemo: true,
-    },
-    'chatbot-ia': {
-        id: 'chatbot-ia',
-        name: 'Chatbot IA Multi-Canal',
-        description: 'Assistant IA sur votre site, Instagram, WhatsApp ou Messenger. Répond, rassure vos clients et prend des RDV 24h/24.',
-        icon: <MessageSquare className="w-8 h-8" />,
-        href: '/apps/chatbot-ia',
-        demoHref: '/apps/chatbot-ia?demo=true',
-    },
-    'qualification-dossiers': {
-        id: 'qualification-dossiers',
-        name: 'Qualification de Dossiers IA',
-        description: 'Qualifiez automatiquement les dossiers clients avant la première visite. L\'IA vérifie l\'éligibilité et prépare un résumé complet.',
-        icon: <FileText className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'email-automation': {
-        id: 'email-automation',
-        name: 'Emailing IA Personnalisé',
-        description: 'Emails qui convertissent vraiment. L\'IA rédige des messages hyper-personnalisés pour chaque contact.',
-        icon: <Mail className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'site-web-premium': {
-        id: 'site-web-premium',
-        name: 'Site Web Premium',
-        description: 'Votre site en 1ère page Google. Design sur-mesure, SEO 100% optimisé, espace client, e-commerce possible.',
-        icon: <Globe className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'automatisation-rdv': {
-        id: 'automatisation-rdv',
-        name: 'Automatisation RDV & Tâches',
-        description: 'Libérez 10h par semaine. Automatisez la prise de RDV, les rappels, les tâches récurrentes.',
-        icon: <Calendar className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'calculateur-devis': {
-        id: 'calculateur-devis',
-        name: 'Calculateur Éligibilité & Devis IA',
-        description: 'Pré-qualifiez les clients et générez des devis professionnels en 30 secondes. Ne transmettez que les dossiers finançables.',
-        icon: <FileText className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'visualiseur-3d': {
-        id: 'visualiseur-3d',
-        name: 'Visualiseur 3D Architecture',
-        description: 'Transformez vos plans en visites virtuelles époustouflantes. Rendu haute résolution.',
-        icon: <Box className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'video-marketing-ia': {
-        id: 'video-marketing-ia',
-        name: 'Vidéos Marketing IA 4K',
-        description: 'Créez des pubs virales sans équipe vidéo. Vidéos 4K hyper-réalistes avec technologies Veo.',
-        icon: <Video className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'avant-apres-medical': {
-        id: 'avant-apres-medical',
-        name: 'Simulation Avant/Après',
-        description: 'Rassurez vos patients avec des simulations photo-réalistes. +40% de conversions.',
-        icon: <ImageIcon className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'lead-gen-ads': {
-        id: 'lead-gen-ads',
-        name: 'Génération Leads Meta/TikTok/Google',
-        description: 'Campagnes publicitaires IA optimisées. Génération de leads qualifiés sur toutes les plateformes.',
-        icon: <Sparkles className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-    'analyse-data-ia': {
-        id: 'analyse-data-ia',
-        name: 'Analyse de Données & Amélioration IA',
-        description: 'Analyse poussée de vos données métier. Amélioration continue de vos IA avec nos data scientists.',
-        icon: <Box className="w-8 h-8" />,
-        href: '#',
-        demoHref: '#',
-    },
-};
+    {
+        id: 3,
+        name: "Analyseur de Données",
+        type: "Data Processing",
+        status: "paused",
+        metrics: "En attente",
+        lastActive: "Il y a 2j",
+        icon: Sparkles,
+        color: "text-purple-500",
+        bg: "bg-purple-500/10"
+    }
+];
 
 export default function DashboardPage() {
-    const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [userApps, setUserApps] = useState<Application[]>([]);
-    const [pendingRequests, setPendingRequests] = useState<AppRequest[]>([]);
-    const [showModal, setShowModal] = useState(false);
-    const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-    const [showRdvForm, setShowRdvForm] = useState(false);
-    const [rdvData, setRdvData] = useState({ date: '', contact: '', message: '' });
-    const [submitLoading, setSubmitLoading] = useState(false);
-
-    // Admin-specific: which apps to show on dashboard
-    const [adminDashboardApps, setAdminDashboardApps] = useState<string[]>([]);
-    const isAdmin = user?.email === 'admin@nova.com';
-
-    useEffect(() => {
-        checkAuthAndApps();
-    }, []);
-
-    const checkAuthAndApps = async () => {
-        try {
-            const token = localStorage.getItem('auth_token');
-            const storedUser = localStorage.getItem('user');
-
-            if (!token || !storedUser) {
-                router.push('/login');
-                return;
-            }
-
-            const userData: User = JSON.parse(storedUser);
-            setUser(userData);
-
-            // Check if admin
-            const userIsAdmin = userData.email === 'admin@nova.com';
-
-            if (userIsAdmin) {
-                // Admin: load dashboard preferences from localStorage
-                const savedAdminApps = localStorage.getItem('admin_dashboard_apps');
-                if (savedAdminApps) {
-                    setAdminDashboardApps(JSON.parse(savedAdminApps));
-                } else {
-                    // Default: show first 2 apps
-                    const defaultApps = ['agent-whatsapp', 'cv-profiler'];
-                    setAdminDashboardApps(defaultApps);
-                    localStorage.setItem('admin_dashboard_apps', JSON.stringify(defaultApps));
-                }
-                // Admin has access to all apps anyway
-                setUserApps([]);
-            } else {
-                // Regular user: apps they own
-                const apps = (userData.applications || [])
-                    .map(appId => ALL_APPS[appId])
-                    .filter(Boolean);
-                setUserApps(apps);
-
-                // Récupérer les demandes en cours
-                try {
-                    const res = await fetch(`/api/app-requests?clientId=${userData.id}`);
-                    const data = await res.json();
-                    if (data.requests) {
-                        setPendingRequests(data.requests.filter((r: AppRequest) => r.status === 'pending'));
-                    }
-                } catch (e) {
-                    console.log('Could not fetch requests:', e);
-                }
-            }
-
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            router.push('/login');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Admin: add app to dashboard
-    const addToDashboard = (appId: string) => {
-        const newApps = [...adminDashboardApps, appId];
-        setAdminDashboardApps(newApps);
-        localStorage.setItem('admin_dashboard_apps', JSON.stringify(newApps));
-        setShowModal(false);
-    };
-
-    // Admin: remove app from dashboard
-    const removeFromDashboard = (appId: string) => {
-        const newApps = adminDashboardApps.filter(id => id !== appId);
-        setAdminDashboardApps(newApps);
-        localStorage.setItem('admin_dashboard_apps', JSON.stringify(newApps));
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-    };
-
-    const handleAppClick = (app: Application) => {
-        const hasAccess = userApps.some(a => a.id === app.id);
-        if (hasAccess) {
-            if (app.externalDemo) {
-                window.open(app.href, '_blank');
-            } else {
-                router.push(app.href);
-            }
-        } else {
-            setSelectedApp(app);
-            setShowModal(true);
-        }
-    };
-
-    const handleDemo = () => {
-        if (!selectedApp) return;
-        if (selectedApp.externalDemo) {
-            window.open(selectedApp.demoHref, '_blank');
-        } else {
-            router.push(selectedApp.demoHref || selectedApp.href);
-        }
-        setShowModal(false);
-    };
-
-    const handleRequestAccess = () => {
-        setShowRdvForm(true);
-    };
-
-    const submitRequest = async () => {
-        if (!selectedApp || !user) return;
-        setSubmitLoading(true);
-
-        try {
-            const response = await fetch('/api/app-requests', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    clientId: user.id,
-                    appId: selectedApp.id,
-                    message: rdvData.message,
-                    rdvDate: rdvData.date || null,
-                    rdvContact: rdvData.contact || user.email,
-                }),
-            });
-
-            if (response.ok) {
-                setPendingRequests(prev => [...prev, {
-                    id: 'temp',
-                    app_id: selectedApp.id,
-                    status: 'pending',
-                    created_at: new Date().toISOString(),
-                }]);
-                setShowModal(false);
-                setShowRdvForm(false);
-                setRdvData({ date: '', contact: '', message: '' });
-            }
-        } catch (error) {
-            console.error('Error submitting request:', error);
-        } finally {
-            setSubmitLoading(false);
-        }
-    };
-
-    const getAvailableApps = () => {
-        const ownedIds = userApps.map(a => a.id);
-        const pendingIds = pendingRequests.map(r => r.app_id);
-        return Object.values(ALL_APPS).filter(app =>
-            !ownedIds.includes(app.id) && !pendingIds.includes(app.id)
-        );
-    };
-
-    const hasPendingRequest = (appId: string) => {
-        return pendingRequests.some(r => r.app_id === appId);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="dashboard-loading">
-                <Loader2 className="dashboard-loader-icon" />
-                <p>Chargement...</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="dashboard-container">
-            {/* Header */}
-            <header className="dashboard-header">
-                <div className="dashboard-brand">
-                    <div className="dashboard-brand-icon">
-                        <Sparkles size={24} />
-                    </div>
-                    <div>
-                        <h1 className="dashboard-brand-name">NovaSolutions</h1>
-                        <p className="dashboard-brand-subtitle">Espace Client</p>
-                    </div>
+        <div className="max-w-7xl mx-auto space-y-8 pb-12">
+
+            {/* Welcome Section */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="animate-fade-in-up">
+                    <h1 className="text-3xl font-bold font-outfit mb-2">Bonjour, Alex 👋</h1>
+                    <p className="text-gray-400">Voici ce qui se passe avec vos assistants IA aujourd'hui.</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {user?.email === 'admin@nova.com' && (
-                        <a href="/admin/app-requests" className="dashboard-logout-btn" style={{ background: 'rgba(139, 92, 246, 0.3)' }}>
-                            <span>⚙️ Admin</span>
-                        </a>
-                    )}
-                    <button onClick={handleLogout} className="dashboard-logout-btn">
-                        <LogOut size={18} />
-                        <span>Déconnexion</span>
+                <div className="flex gap-3 animate-fade-in-up delay-100">
+                    <button className="px-4 py-2 bg-[#1A1A1C] hover:bg-[#252528] border border-white/10 rounded-xl text-sm font-medium transition-colors flex items-center gap-2">
+                        <Clock size={16} />
+                        Historique
+                    </button>
+                    <button className="px-4 py-2 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center gap-2">
+                        <Zap size={16} className="fill-black" />
+                        Nouvelle Action
                     </button>
                 </div>
-            </header>
+            </div>
 
-            {/* Main Content */}
-            <main className="dashboard-main">
-                <div className="dashboard-welcome">
-                    <div className="dashboard-status-badge">
-                        <span className="dashboard-status-dot" />
-                        Connecté en tant que {user?.company_name || user?.email}
-                    </div>
-                    <h2 className="dashboard-title">
-                        Bienvenue dans votre
-                        <span className="dashboard-title-gradient"> Espace Client</span>
-                    </h2>
-                    <p className="dashboard-subtitle">
-                        Vos applications et services NovaSolutions
-                    </p>
-                </div>
-
-                {/* Applications Grid */}
-                <div className="dashboard-apps-grid">
-                    {/* Admin: Apps selected for dashboard */}
-                    {isAdmin && adminDashboardApps.map((appId) => {
-                        const app = ALL_APPS[appId];
-                        if (!app) return null;
-                        return (
-                            <div key={app.id} className="dashboard-app-card" style={{ position: 'relative' }}>
-                                {/* X button to remove */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); removeFromDashboard(app.id); }}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '12px',
-                                        right: '12px',
-                                        background: 'rgba(239, 68, 68, 0.2)',
-                                        border: 'none',
-                                        borderRadius: '50%',
-                                        width: '28px',
-                                        height: '28px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        color: '#fca5a5',
-                                        zIndex: 10,
-                                    }}
-                                    title="Retirer du dashboard"
-                                >
-                                    <X size={14} />
-                                </button>
-                                <div className="dashboard-app-icon">
-                                    {app.icon}
-                                </div>
-                                <div className="dashboard-app-content">
-                                    <h3 className="dashboard-app-name">{app.name}</h3>
-                                    <p className="dashboard-app-desc">{app.description}</p>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                    <button
-                                        onClick={() => app.externalDemo ? window.open(app.demoHref, '_blank') : router.push(app.demoHref || app.href)}
-                                        style={{
-                                            padding: '8px 16px',
-                                            background: 'rgba(139, 92, 246, 0.2)',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#a78bfa',
-                                            fontSize: '12px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        ▶ Démo
-                                    </button>
-                                    <button
-                                        onClick={() => app.externalDemo ? window.open(app.href, '_blank') : router.push(app.href)}
-                                        style={{
-                                            padding: '8px 16px',
-                                            background: 'rgba(16, 185, 129, 0.2)',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: '#6ee7b7',
-                                            fontSize: '12px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        🚀 Standard
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    {/* Regular user: Apps they own */}
-                    {!isAdmin && userApps.map((app) => (
-                        <button
-                            key={app.id}
-                            onClick={() => handleAppClick(app)}
-                            className="dashboard-app-card"
-                        >
-                            <div className="dashboard-app-icon">
-                                {app.icon}
-                            </div>
-                            <div className="dashboard-app-content">
-                                <h3 className="dashboard-app-name">
-                                    {app.name}
-                                    {app.externalDemo ? (
-                                        <ExternalLink size={18} className="dashboard-app-arrow" />
-                                    ) : (
-                                        <ArrowRight size={20} className="dashboard-app-arrow" />
-                                    )}
-                                </h3>
-                                <p className="dashboard-app-desc">{app.description}</p>
-                            </div>
-                            <span className="dashboard-app-badge">Actif</span>
-                        </button>
-                    ))}
-
-                    {/* Apps en attente (non-admin only) */}
-                    {!isAdmin && pendingRequests.map((req) => {
-                        const app = ALL_APPS[req.app_id];
-                        if (!app) return null;
-                        return (
-                            <div key={req.id} className="dashboard-app-card dashboard-app-pending">
-                                <div className="dashboard-app-icon dashboard-app-icon-pending">
-                                    {app.icon}
-                                </div>
-                                <div className="dashboard-app-content">
-                                    <h3 className="dashboard-app-name">{app.name}</h3>
-                                    <p className="dashboard-app-desc">{app.description}</p>
-                                </div>
-                                <span className="dashboard-app-badge-pending">En attente</span>
-                            </div>
-                        );
-                    })}
-
-                    {/* Bouton + pour demander un nouveau service */}
-                    <button
-                        onClick={() => {
-                            setSelectedApp(null);
-                            setShowModal(true);
-                        }}
-                        className="dashboard-add-card"
-                    >
-                        <div className="dashboard-add-icon">
-                            <Plus size={40} />
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up delay-200">
+                {/* Stat Card 1 */}
+                <div className="bg-[#121214]/50 backdrop-blur-md border border-white/5 p-6 rounded-3xl hover:border-white/10 transition-colors group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-orange-500/10 rounded-2xl">
+                            <MessageSquare className="text-orange-500" size={24} />
                         </div>
-                        <h3>Demander un nouveau service</h3>
-                        <p>Découvrez nos autres solutions IA</p>
-                    </button>
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full">
+                            +12.5% <ArrowUpRight size={12} />
+                        </span>
+                    </div>
+                    <h3 className="text-gray-400 text-sm font-medium">Conversations gérées</h3>
+                    <p className="text-3xl font-bold font-outfit mt-1 group-hover:text-orange-400 transition-colors">12,450</p>
                 </div>
-            </main>
 
-            {/* Modal */}
-            {showModal && (
-                <div className="dashboard-modal-overlay" onClick={() => { setShowModal(false); setShowRdvForm(false); }}>
-                    <div className="dashboard-modal" onClick={e => e.stopPropagation()}>
-                        <button className="dashboard-modal-close" onClick={() => { setShowModal(false); setShowRdvForm(false); }}>
-                            <X size={24} />
-                        </button>
+                {/* Stat Card 2 */}
+                <div className="bg-[#121214]/50 backdrop-blur-md border border-white/5 p-6 rounded-3xl hover:border-white/10 transition-colors group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-blue-500/10 rounded-2xl">
+                            <Clock className="text-blue-500" size={24} />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full">
+                            +5h 20m <ArrowUpRight size={12} />
+                        </span>
+                    </div>
+                    <h3 className="text-gray-400 text-sm font-medium">Temps humain économisé</h3>
+                    <p className="text-3xl font-bold font-outfit mt-1 group-hover:text-blue-400 transition-colors">840 h</p>
+                </div>
 
-                        {!selectedApp ? (
-                            // Liste des apps disponibles
-                            <>
-                                <h2 className="dashboard-modal-title">{isAdmin ? 'Ajouter un Service' : 'Nos Services IA'}</h2>
-                                <p className="dashboard-modal-subtitle">
-                                    {isAdmin ? 'Choisissez les services à afficher sur votre dashboard' : 'Testez gratuitement ou débloquez l\'accès illimité'}
-                                </p>
-                                <div className="dashboard-modal-apps">
-                                    {Object.values(ALL_APPS)
-                                        .filter(app => isAdmin
-                                            ? !adminDashboardApps.includes(app.id)  // Admin: apps not yet on dashboard
-                                            : !userApps.some(a => a.id === app.id)  // Regular: apps not owned
-                                        )
-                                        .sort((a, b) => {
-                                            // Sort: apps with demo first
-                                            const aHasDemo = a.demoHref && a.demoHref !== '#';
-                                            const bHasDemo = b.demoHref && b.demoHref !== '#';
-                                            if (aHasDemo && !bHasDemo) return -1;
-                                            if (!aHasDemo && bHasDemo) return 1;
-                                            return 0;
-                                        })
-                                        .map(app => (
-                                            <div key={app.id} className="dashboard-modal-app-row">
-                                                <div className="dashboard-modal-app-info">
-                                                    <div className="dashboard-modal-app-icon">{app.icon}</div>
-                                                    <div>
-                                                        <h4>{app.name}</h4>
-                                                        <p>{app.description}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="dashboard-modal-app-actions">
-                                                    {isAdmin ? (
-                                                        // Admin: Add to dashboard + Demo/Standard
-                                                        <>
-                                                            {app.demoHref && app.demoHref !== '#' && (
-                                                                <button
-                                                                    className="dashboard-modal-mini-btn demo"
-                                                                    onClick={() => {
-                                                                        if (app.externalDemo) {
-                                                                            window.open(app.demoHref, '_blank');
-                                                                        } else {
-                                                                            router.push(app.demoHref!);
-                                                                        }
-                                                                        setShowModal(false);
-                                                                    }}
-                                                                >
-                                                                    ▶ Démo
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                className="dashboard-modal-mini-btn"
-                                                                style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7' }}
-                                                                onClick={() => {
-                                                                    if (app.externalDemo) {
-                                                                        window.open(app.href, '_blank');
-                                                                    } else {
-                                                                        router.push(app.href);
-                                                                    }
-                                                                    setShowModal(false);
-                                                                }}
-                                                            >
-                                                                🚀 Standard
-                                                            </button>
-                                                            <button
-                                                                className="dashboard-modal-mini-btn request"
-                                                                onClick={() => addToDashboard(app.id)}
-                                                            >
-                                                                + Ajouter
-                                                            </button>
-                                                        </>
-                                                    ) : hasPendingRequest(app.id) ? (
-                                                        <span className="pending-badge">Demande en cours</span>
-                                                    ) : (
-                                                        // Regular user: Demo + Débloquer
-                                                        <>
-                                                            {app.demoHref && app.demoHref !== '#' && (
-                                                                <button
-                                                                    className="dashboard-modal-mini-btn demo"
-                                                                    onClick={() => {
-                                                                        if (app.externalDemo) {
-                                                                            window.open(app.demoHref, '_blank');
-                                                                        } else {
-                                                                            router.push(app.demoHref!);
-                                                                        }
-                                                                        setShowModal(false);
-                                                                    }}
-                                                                >
-                                                                    ▶ Démo{app.id === 'cv-profiler' ? ' (3 CV)' : ''}
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                className="dashboard-modal-mini-btn request"
-                                                                onClick={() => {
-                                                                    setSelectedApp(app);
-                                                                    setShowRdvForm(true);
-                                                                }}
-                                                            >
-                                                                Débloquer
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            </>
-                        ) : !showRdvForm ? (
-                            // Options pour l'app sélectionnée
-                            <>
-                                <div className="dashboard-modal-app-header">
-                                    <div className="dashboard-modal-app-icon-large">{selectedApp.icon}</div>
-                                    <h2>{selectedApp.name}</h2>
-                                    <p>{selectedApp.description}</p>
-                                </div>
-                                <div className="dashboard-modal-actions">
-                                    <button className="dashboard-modal-btn demo" onClick={handleDemo}>
-                                        <Play size={20} />
-                                        <div className="dashboard-modal-btn-text">
-                                            <span>Essayer la Démo</span>
-                                            {selectedApp.id === 'cv-profiler' && <small>3 CV maximum</small>}
-                                        </div>
-                                    </button>
-                                    <button className="dashboard-modal-btn request" onClick={handleRequestAccess}>
-                                        <Calendar size={20} />
-                                        <div className="dashboard-modal-btn-text">
-                                            <span>Débloquer l'accès illimité</span>
-                                            <small>Réservez votre place • Places limitées</small>
-                                        </div>
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            // Formulaire RDV
-                            <>
-                                <h2 className="dashboard-modal-title">Demander l'accès</h2>
-                                <p className="dashboard-modal-subtitle">
-                                    Application : <strong>{selectedApp.name}</strong>
-                                </p>
-                                <div className="dashboard-modal-form">
-                                    <div className="form-group">
-                                        <label>Email ou téléphone de contact</label>
-                                        <input
-                                            type="text"
-                                            value={rdvData.contact}
-                                            onChange={e => setRdvData({ ...rdvData, contact: e.target.value })}
-                                            placeholder="votre@email.com ou 06 XX XX XX XX"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Date souhaitée pour le RDV (optionnel)</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={rdvData.date}
-                                            onChange={e => setRdvData({ ...rdvData, date: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Message (optionnel)</label>
-                                        <textarea
-                                            value={rdvData.message}
-                                            onChange={e => setRdvData({ ...rdvData, message: e.target.value })}
-                                            placeholder="Décrivez votre besoin..."
-                                            rows={3}
-                                        />
-                                    </div>
-                                    <button
-                                        className="dashboard-modal-submit"
-                                        onClick={submitRequest}
-                                        disabled={submitLoading}
-                                    >
-                                        {submitLoading ? 'Envoi...' : 'Envoyer ma demande'}
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                {/* Stat Card 3 */}
+                <div className="bg-[#121214]/50 backdrop-blur-md border border-white/5 p-6 rounded-3xl hover:border-white/10 transition-colors group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-purple-500/10 rounded-2xl">
+                            <Sparkles className="text-purple-500" size={24} />
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-medium text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full">
+                            98% Score
+                        </span>
+                    </div>
+                    <h3 className="text-gray-400 text-sm font-medium">Satisfaction IA</h3>
+                    <p className="text-3xl font-bold font-outfit mt-1 group-hover:text-purple-400 transition-colors">4.9/5</p>
+                </div>
+            </div>
+
+            {/* Chart Section */}
+            <div className="grid lg:grid-cols-3 gap-6 animate-fade-in-up delay-300">
+                <div className="lg:col-span-2 bg-[#121214]/50 backdrop-blur-md border border-white/5 p-6 rounded-3xl">
+                    <div className="flex justify-between items-center mb-8">
+                        <h3 className="font-bold text-lg">Performance des Agents</h3>
+                        <select className="bg-white/5 border border-white/10 rounded-lg text-xs p-2 outline-none text-gray-400">
+                            <option>7 derniers jours</option>
+                            <option>30 derniers jours</option>
+                        </select>
+                    </div>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#F97316" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="colorConv" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#666', fontSize: 12 }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#666', fontSize: 12 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1A1A1C', borderColor: '#333', borderRadius: '12px' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Area type="monotone" dataKey="leads" stroke="#F97316" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
+                                <Area type="monotone" dataKey="conversations" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorConv)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
-            )}
 
+                {/* AI Assistant Quick Chat */}
+                <div className="bg-gradient-to-b from-[#1A1A1C] to-[#0a0a0a] border border-white/5 p-6 rounded-3xl flex flex-col relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+
+                    <div className="flex items-center gap-3 mb-6 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                            <Sparkles size={20} className="text-white" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold">Vextra Assistant</h3>
+                            <p className="text-xs text-green-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                En ligne
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 space-y-4 mb-4 overflow-y-auto max-h-[200px] scrollbar-hide relative z-10">
+                        <div className="bg-white/5 rounded-2xl rounded-tl-none p-3 text-sm text-gray-300">
+                            Bonjour ! Je peux vous aider à configurer un nouveau service ou analyser vos stats.
+                        </div>
+                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl rounded-tr-none p-3 text-sm text-white ml-auto max-w-[80%]">
+                            Comment augmenter mes leads cette semaine ?
+                        </div>
+                    </div>
+
+                    <div className="relative z-10 mt-auto">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Posez une question..."
+                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-4 pr-10 text-sm focus:border-orange-500/50 focus:outline-none transition-colors"
+                            />
+                            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors">
+                                <ArrowRight size={14} className="text-white" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Active Services List */}
+            <div className="animate-fade-in-up delay-400">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-lg">Vos Services Actifs</h3>
+                    <button className="text-sm text-orange-500 hover:text-orange-400 transition-colors">Voir tout</button>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {services.map((service) => (
+                        <div key={service.id} className="bg-[#121214]/50 backdrop-blur-md border border-white/5 p-5 rounded-2xl hover:border-white/20 transition-all hover:-translate-y-1 group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className={`p-3 rounded-xl ${service.bg}`}>
+                                    <service.icon className={service.color} size={20} />
+                                </div>
+                                <div className={`px-2 py-1 rounded-full text-xs font-medium border ${service.status === 'active'
+                                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                        : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                    }`}>
+                                    {service.status === 'active' ? 'Actif' : 'En pause'}
+                                </div>
+                            </div>
+
+                            <h4 className="font-bold mb-1">{service.name}</h4>
+                            <p className="text-xs text-gray-500 mb-4">{service.type}</p>
+
+                            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Performance</p>
+                                    <p className="text-sm font-medium">{service.metrics}</p>
+                                </div>
+                                <button className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors">
+                                    {service.status === 'active' ? <Pause size={16} /> : <Play size={16} />}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }

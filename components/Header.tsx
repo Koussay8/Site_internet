@@ -28,24 +28,24 @@ const Header = memo(function Header() {
                     height={32}
                     className="object-contain"
                 />
-                <span className="font-bold text-lg tracking-tight">Vextra Tech</span>
+                <span className="font-heading font-bold text-lg tracking-tight">Vextra Tech</span>
             </div>
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-8">
                 <Link href="/#services" className="hover:text-gray-300 transition-colors">
-                    <span className="text-orange-500 mr-2">•</span>Nos Agents
+                    <span className="text-accent mr-2">•</span>Nos Agents
                 </Link>
                 <Link href="/#services" className="hover:text-gray-300 transition-colors">
-                    <span className="text-orange-500 mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
+                    <span className="text-accent mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
                     Services
                 </Link>
                 <Link href="/#about" className="hover:text-gray-300 transition-colors">
-                    <span className="text-orange-500 mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
+                    <span className="text-accent mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
                     À propos
                 </Link>
                 <Link href="/#contact" className="hover:text-gray-300 transition-colors">
-                    <span className="text-orange-500 mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
+                    <span className="text-accent mr-2 opacity-0 hover:opacity-100 transition-opacity"></span>
                     Contact
                 </Link>
             </nav>

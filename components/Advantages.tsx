@@ -2,7 +2,7 @@ import { memo } from "react";
 
 const Advantages = memo(function Advantages() {
     return (
-        <section className="w-full py-32 px-12 bg-[rgb(30,30,30)] text-white relative overflow-hidden">
+        <section className="w-full py-32 px-12 bg-background text-white relative overflow-hidden">
 
             {/* Background Glows (Simulating 3D environment) */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -14,7 +14,7 @@ const Advantages = memo(function Advantages() {
 
                 {/* Header */}
                 <div className="mb-24">
-                    <h2 className="text-6xl font-bold tracking-tight max-w-xl">
+                    <h2 className="text-6xl font-heading font-bold tracking-tight max-w-xl">
                         Ce que Vextra Tech peut faire pour vous
                     </h2>
                 </div>
@@ -29,7 +29,7 @@ const Advantages = memo(function Advantages() {
                             <div className="w-16 h-16 bg-gradient-to-br from-orange-300 to-orange-600 rounded-full shadow-[0_0_30px_rgba(255,107,0,0.5)] group-hover:scale-110 transition-transform duration-500" />
                             <div className="w-12 h-12 bg-gradient-to-tl from-white to-orange-200 rounded-full absolute ml-12 mt-8 shadow-lg group-hover:translate-x-2 transition-transform duration-500" />
                         </div>
-                        <h3 className="text-2xl font-bold mb-4">Précision et Constance</h3>
+                        <h3 className="text-2xl font-heading font-bold mb-4">Précision et Constance</h3>
                         <p className="text-gray-400 leading-relaxed">
                             L'assistant virtuel maintient un haut niveau de précision et de constance dans l'exécution des tâches.
                         </p>
@@ -44,7 +44,7 @@ const Advantages = memo(function Advantages() {
                             </div>
                             <div className="w-8 h-8 bg-orange-200 rounded-full absolute mb-16 ml-12 blur-sm" />
                         </div>
-                        <h3 className="text-2xl font-bold mb-4">Économies</h3>
+                        <h3 className="text-2xl font-heading font-bold mb-4">Économies</h3>
                         <p className="text-gray-300 leading-relaxed">
                             Les entreprises peuvent réduire leurs coûts opérationnels en automatisant les tâches et en améliorant l'efficacité.
                         </p>
@@ -59,7 +59,7 @@ const Advantages = memo(function Advantages() {
                                 <div className="w-10 h-20 bg-gradient-to-l from-orange-600 to-orange-400 rounded-r-full shadow-[0_0_20px_rgba(255,107,0,0.3)]" />
                             </div>
                         </div>
-                        <h3 className="text-2xl font-bold mb-4">Personnalisation</h3>
+                        <h3 className="text-2xl font-heading font-bold mb-4">Personnalisation</h3>
                         <p className="text-gray-400 leading-relaxed">
                             L'assistant virtuel offre des recommandations et services personnalisés, adaptés à vos besoins spécifiques.
                         </p>

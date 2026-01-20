@@ -1,414 +1,402 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Mail, Lock, ArrowRight, Check, Eye, EyeOff, Loader2, AlertCircle, Phone } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signInWithEmail, sendPhoneOTP, verifyPhoneOTP } from '@/lib/auth-helpers';
 
-export default function LoginPage() {
+function LoginPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [focusedField, setFocusedField] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    // Phone auth state
+    const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+    const [phone, setPhone] = useState('');
+    const [otp, setOtp] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [mockCode, setMockCode] = useState<string | null>(null);
+
+    // Check for OAuth errors in URL
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        if (errorParam) {
+            setError(decodeURIComponent(errorParam));
+        }
+    }, [searchParams]);
+
+    const handleEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
+        setError(null);
 
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Erreur de connexion');
-            }
-
-            // Store the JWT token
-            localStorage.setItem('auth_token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            // Force reload to update AuthProvider
-            window.location.href = '/dashboard';
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-        } finally {
+            await signInWithEmail(email, password);
+            router.push('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Erreur de connexion');
             setIsLoading(false);
         }
     };
 
+    const handlePhoneSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            if (!otpSent) {
+                // Step 1: Send OTP
+                const result = await sendPhoneOTP(phone);
+                setOtpSent(true);
+                if (result.mockCode) {
+                    setMockCode(result.mockCode);
+                }
+                setIsLoading(false);
+            } else {
+                // Step 2: Verify OTP
+                await verifyPhoneOTP(phone, otp);
+                router.push('/dashboard');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Erreur lors de l\'authentification');
+            setIsLoading(false);
+        }
+    };
+
+    const resetPhoneAuth = () => {
+        setOtpSent(false);
+        setOtp('');
+        setMockCode(null);
+        setError(null);
+    };
+
     return (
-        <div className="login-page">
-            {/* Background effects - same as homepage */}
-            <div className="hero-bg"></div>
+        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-orange-500/30 flex flex-col relative overflow-hidden">
 
-            <div className="login-container">
-                {/* Back link */}
-                <Link href="/" className="back-link">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    Retour à l&apos;accueil
-                </Link>
-
-                {/* Login Card */}
-                <div className="login-card">
-                    {/* Icon */}
-                    <div className="login-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                    </div>
-
-                    {/* Title */}
-                    <h1 className="login-title">Connexion</h1>
-                    <p className="login-subtitle">Accédez à votre espace client</p>
-
-                    {/* Error message */}
-                    {error && (
-                        <div className="error-message">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="8" x2="12" y2="12" />
-                                <line x1="12" y1="16" x2="12.01" y2="16" />
-                            </svg>
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="login-form">
-                        {/* Email */}
-                        <div className="form-group">
-                            <label htmlFor="email">Email</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                    <polyline points="22,6 12,13 2,6" />
-                                </svg>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    placeholder="votre@email.com"
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password */}
-                        <div className="form-group">
-                            <label htmlFor="password">Mot de passe</label>
-                            <div className="input-wrapper">
-                                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                                <input
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="toggle-password"
-                                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                                >
-                                    {showPassword ? (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                            <line x1="1" y1="1" x2="23" y2="23" />
-                                        </svg>
-                                    ) : (
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Submit button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="btn btn-primary"
-                            style={{ width: '100%', marginTop: '0.5rem' }}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                                    </svg>
-                                    Connexion en cours...
-                                </>
-                            ) : (
-                                'Se connecter'
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Register link */}
-                    <p className="register-link">
-                        Pas encore de compte ? <Link href="/register">Créer un compte</Link>
-                    </p>
-
-                    {/* Footer */}
-                    <p className="login-footer">
-                        © 2024 NovaSolutions. Tous droits réservés.
-                    </p>
-                </div>
+            {/* Background Ambience */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow delay-1000"></div>
             </div>
 
-            <style jsx>{`
-                .login-page {
-                    position: relative;
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 2rem;
-                    overflow: hidden;
-                }
+            {/* Header */}
+            <header className="absolute top-0 left-0 w-full z-50 p-6 md:px-12 flex justify-between items-center">
+                <Link href="/" className="flex items-center gap-3 group">
+                    <Image
+                        src="/logo-white.png"
+                        alt="Vextra Tech Logo"
+                        width={32}
+                        height={32}
+                        className="object-contain group-hover:scale-105 transition-transform"
+                    />
+                    <span className="font-bold text-lg tracking-tight group-hover:text-orange-100 transition-colors">Vextra Tech</span>
+                </Link>
+            </header>
 
-                .hero-bg {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(135deg, #0a0118 0%, #1a0f2e 50%, #0a0118 100%);
-                    z-index: -2;
-                }
+            <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+                <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
 
-                .hero-bg::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-                    background-size: 50px 50px;
-                    animation: grid-move 20s linear infinite;
-                }
+                    {/* Left Side */}
+                    <div className="hidden md:flex flex-col justify-center space-y-8 pr-12">
+                        <div>
+                            <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in-up">
+                                Espace Client
+                            </span>
+                            <h1 className="text-5xl font-bold leading-tight mb-6 animate-fade-in-up delay-100">
+                                Ravi de vous <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-100">revoir.</span>
+                            </h1>
+                            <p className="text-gray-400 text-lg leading-relaxed animate-fade-in-up delay-200">
+                                Votre tableau de bord intelligent vous attend. Connectez-vous pour suivre vos performances et gérer vos assistants IA.
+                            </p>
+                        </div>
 
-                .hero-bg::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: 
-                        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
-                    z-index: -1;
-                }
+                        <div className="space-y-4 animate-fade-in-up delay-300">
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                                    <Check className="w-5 h-5 text-green-500" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white">Sécurité Maximale</p>
+                                    <p className="text-sm text-gray-500">Chiffrement de bout en bout</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                                    <Zap className="w-5 h-5 text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white">Temps Réel</p>
+                                    <p className="text-sm text-gray-500">Données mises à jour à la seconde</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                @keyframes grid-move {
-                    0% { transform: translate(0, 0); }
-                    100% { transform: translate(50px, 50px); }
-                }
+                    {/* Right Side: Form */}
+                    <div className="relative animate-fade-in-up delay-200">
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-purple-500/10 rounded-[30px] blur-xl transform scale-105"></div>
 
-                .login-container {
-                    position: relative;
-                    width: 100%;
-                    max-width: 440px;
-                    z-index: 1;
-                }
+                        <div className="bg-[#121214]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[30px] shadow-2xl relative">
+                            <div className="mb-8 text-center md:text-left">
+                                <h2 className="text-2xl font-bold mb-2">Connexion</h2>
+                                <p className="text-gray-500 text-sm">Entrez vos identifiants pour accéder à votre espace.</p>
+                            </div>
 
-                .back-link {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    color: rgba(255, 255, 255, 0.6);
-                    text-decoration: none;
-                    font-size: 0.9rem;
-                    margin-bottom: 2rem;
-                    transition: all 0.3s ease;
-                }
+                            {error && (
+                                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+                                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                    <p className="text-sm text-red-300">{error}</p>
+                                </div>
+                            )}
 
-                .back-link:hover {
-                    color: white;
-                    transform: translateX(-4px);
-                }
+                            {mockCode && (
+                                <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+                                    <p className="text-sm text-orange-300">
+                                        <span className="font-bold">Code OTP (DEV):</span> {mockCode}
+                                    </p>
+                                </div>
+                            )}
 
-                .login-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 24px;
-                    padding: 3rem 2.5rem;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                }
+                            {/* Method Tabs */}
+                            <div className="flex gap-2 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => { setAuthMethod('email'); resetPhoneAuth(); }}
+                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === 'email'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                        }`}
+                                >
+                                    Email
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setAuthMethod('phone'); setError(null); }}
+                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${authMethod === 'phone'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                        }`}
+                                >
+                                    Téléphone
+                                </button>
+                            </div>
 
-                .login-icon {
-                    width: 80px;
-                    height: 80px;
-                    margin: 0 auto 1.5rem;
-                    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
-                }
+                            {/* Email Form */}
+                            {authMethod === 'email' && (
+                                <form onSubmit={handleEmailSubmit} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'email' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                            Email
+                                        </label>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'email' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Mail className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type="email"
+                                                placeholder="nom@entreprise.com"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('email')}
+                                                onBlur={() => setFocusedField(null)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
 
-                .login-icon svg {
-                    color: white;
-                }
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center ml-1">
+                                            <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${focusedField === 'password' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                Mot de passe
+                                            </label>
+                                            <Link href="#" className="text-xs text-gray-500 hover:text-white transition-colors">
+                                                Oublié ?
+                                            </Link>
+                                        </div>
+                                        <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'password' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                            <div className="pl-4 text-gray-500">
+                                                <Lock className="w-5 h-5" />
+                                            </div>
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="••••••••"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                onFocus={() => setFocusedField('password')}
+                                                onBlur={() => setFocusedField(null)}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="pr-4 text-gray-500 hover:text-white transition-colors focus:outline-none"
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                .login-title {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    text-align: center;
-                    margin-bottom: 0.5rem;
-                    color: white;
-                }
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Connexion...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Accéder au Dashboard
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            )}
 
-                .login-subtitle {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.6);
-                    margin-bottom: 2rem;
-                }
+                            {/* Phone Form */}
+                            {authMethod === 'phone' && (
+                                <form onSubmit={handlePhoneSubmit} className="space-y-6">
+                                    {!otpSent ? (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'phone' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                    Numéro de téléphone
+                                                </label>
+                                                <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'phone' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                                    <div className="pl-4 text-gray-500">
+                                                        <Phone className="w-5 h-5" />
+                                                    </div>
+                                                    <input
+                                                        type="tel"
+                                                        placeholder="+33 6 12 34 56 78"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none"
+                                                        onFocus={() => setFocusedField('phone')}
+                                                        onBlur={() => setFocusedField(null)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-1">Format international: +33...</p>
+                                            </div>
 
-                .error-message {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                    padding: 1rem;
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.3);
-                    border-radius: 12px;
-                    color: #fca5a5;
-                    margin-bottom: 1.5rem;
-                    font-size: 0.9rem;
-                }
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                                        Envoi...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Envoyer le code
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </>
+                                                )}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ml-1 ${focusedField === 'otp' ? 'text-orange-500' : 'text-gray-500'}`}>
+                                                    Code de vérification
+                                                </label>
+                                                <div className={`relative flex items-center bg-[#1A1A1C] border rounded-xl transition-all duration-300 ${focusedField === 'otp' ? 'border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/10'}`}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="123456"
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        className="w-full bg-transparent p-4 text-white placeholder:text-gray-600 focus:outline-none text-center text-2xl tracking-widest"
+                                                        onFocus={() => setFocusedField('otp')}
+                                                        onBlur={() => setFocusedField(null)}
+                                                        maxLength={6}
+                                                        required
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-1">Code envoyé à {phone}</p>
+                                            </div>
 
-                .login-form {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.5rem;
-                }
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                                        Vérification...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Vérifier et se connecter
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </>
+                                                )}
+                                            </button>
 
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }
+                                            <button
+                                                type="button"
+                                                onClick={resetPhoneAuth}
+                                                className="w-full text-sm text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                ← Modifier le numéro
+                                            </button>
+                                        </>
+                                    )}
+                                </form>
+                            )}
 
-                .form-group label {
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    color: rgba(255, 255, 255, 0.9);
-                }
-
-                .input-wrapper {
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                }
-
-                .input-icon {
-                    position: absolute;
-                    left: 1rem;
-                    color: rgba(255, 255, 255, 0.4);
-                    pointer-events: none;
-                }
-
-                .input-wrapper input {
-                    width: 100%;
-                    padding: 0.875rem 1rem 0.875rem 3rem;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
-                    color: white;
-                    font-size: 1rem;
-                    transition: all 0.3s ease;
-                }
-
-                .input-wrapper input::placeholder {
-                    color: rgba(255, 255, 255, 0.3);
-                }
-
-                .input-wrapper input:focus {
-                    outline: none;
-                    border-color: #8b5cf6;
-                    background: rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-                }
-
-                .toggle-password {
-                    position: absolute;
-                    right: 1rem;
-                    background: none;
-                    border: none;
-                    color: rgba(255, 255, 255, 0.4);
-                    cursor: pointer;
-                    padding: 0.25rem;
-                    transition: color 0.3s ease;
-                }
-
-                .toggle-password:hover {
-                    color: rgba(255, 255, 255, 0.8);
-                }
-
-                .spinner {
-                    animation: spin 1s linear infinite;
-                }
-
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-
-                .register-link {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 0.9rem;
-                    margin-top: 1.5rem;
-                }
-
-                .register-link a {
-                    color: #8b5cf6;
-                    text-decoration: none;
-                    font-weight: 500;
-                }
-
-                .register-link a:hover {
-                    text-decoration: underline;
-                }
-
-                .login-footer {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.4);
-                    font-size: 0.85rem;
-                    margin-top: 1rem;
-                }
-
-                @media (max-width: 640px) {
-                    .login-card {
-                        padding: 2rem 1.5rem;
-                    }
-
-                    .login-title {
-                        font-size: 1.75rem;
-                    }
-                }
-            `}</style>
+                            {/* Footer */}
+                            <p className="text-center text-gray-500 text-sm mt-6">
+                                Pas encore de compte ?{' '}
+                                <Link href="/register" className="text-white font-semibold hover:text-orange-400 transition-colors">
+                                    Créer un compte
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    );
+}
+
+// Wrapper with Suspense boundary
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+            </div>
+        }>
+            <LoginPageContent />
+        </Suspense>
+    );
+}
+
+// Helper components
+function Zap({ className }: { className?: string }) {
+    return (
+        <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
     );
 }

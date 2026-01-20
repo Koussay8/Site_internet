@@ -4,21 +4,21 @@ import { memo } from "react";
 const Footer = memo(function Footer() {
     const marqueeContent = (
         <>
-            <span className="text-[12rem] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-orange-600">
+            <span className="text-[12rem] font-heading font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-orange-600">
                 CONTACT US
             </span>
             <div className="w-32 h-32 rounded-full border-4 border-white/20 flex items-center justify-center">
                 <Phone size={64} className="text-white" />
             </div>
-            <span className="text-[12rem] font-bold tracking-tighter text-[#222]">CONTACT US</span>
+            <span className="text-[12rem] font-heading font-bold tracking-tighter text-[#222]">CONTACT US</span>
             <div className="w-32 h-32 rounded-full border-4 border-orange-500/20 flex items-center justify-center bg-orange-500/10">
-                <Phone size={64} className="text-orange-500" />
+                <Phone size={64} className="text-accent" />
             </div>
         </>
     );
 
     return (
-        <footer className="w-full bg-[rgb(30,30,30)] text-white overflow-hidden py-32 border-t border-white/10">
+        <footer className="w-full bg-background text-white overflow-hidden py-32 border-t border-white/10">
 
             {/* Marquee Container */}
             <div className="relative w-full overflow-hidden whitespace-nowrap opacity-90">

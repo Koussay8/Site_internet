@@ -64,31 +64,55 @@ export default function Chatbot() {
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
 
-        // Mock API call since we don't have the backend
-        setTimeout(() => {
-            setIsLoading(false);
-            // Simple mock logic based on keywords
-            let response = "Je peux vous aider à automatiser cette tâche. Souhaitez-vous un rendez-vous de démonstration ?";
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    history: messages.map(m => ({ role: m.role, content: m.content }))
+                }),
+            });
 
-            if (userMessage.toLowerCase().includes("prix") || userMessage.toLowerCase().includes("coût")) {
-                response = "Nos solutions commencent à partir de 1000€/mois pour un retour sur investissement rapide. Voulez-vous une estimation précise ?";
-            } else if (userMessage.toLowerCase().includes("rdv") || userMessage.toLowerCase().includes("rendez-vous")) {
-                response = "**BLOCK_RDV** {\"contact\": \"email@example.com\"}";
-            } else if (userMessage.toLowerCase().includes("bonjour") || userMessage.toLowerCase().includes("salut")) {
-                response = "Bonjour ! Comment puis-je vous aider aujourd'hui ?";
+            if (!response.ok) {
+                if (response.status === 429) {
+                    throw new Error("Trop de messages, veuillez patienter un instant.");
+                }
+                throw new Error("Erreur de connexion au serveur.");
             }
 
-            // Check for booking block logic from original code
+            const data = await response.json();
+            const botMessage = data.response;
+
+            // Check for booking block logic
             const blockPattern = /\*{0,2}BLOCK_RDV\*{0,2}\s*:?\s*(\{[\s\S]*?\})/i;
-            const blockMatch = response.match(blockPattern);
+            const blockMatch = botMessage.match(blockPattern);
 
             if (blockMatch) {
-                simulateTyping("Parfait ! 📧 Vous recevrez une invitation. À très bientôt !");
-            } else {
-                simulateTyping(response);
-            }
+                // If the bot generates a booking block, we might want to process it specifically
+                // For now, we'll just show the confirmation message like in the mock
+                // In a real scenario, you might want to call a "booking" API here using the JSON data
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const bookingData = JSON.parse(blockMatch[1]);
+                    // Logic to save booking could go here
+                } catch (e) {
+                    console.error("Error parsing booking data", e);
+                }
 
-        }, 1500);
+                // Show a nice confirmation message instead of the raw block
+                simulateTyping("Parfait ! J'ai bien noté vos informations. Un membre de notre équipe vous contactera très rapidement. À bientôt ! 👋");
+            } else {
+                simulateTyping(botMessage);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            simulateTyping("Désolé, j'ai rencontré une erreur de connexion. Pouvez-vous répéter ?");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {

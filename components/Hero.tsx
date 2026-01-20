@@ -130,7 +130,7 @@ const Hero = memo(function Hero() {
     const fadeClass = prefersReducedMotion ? "opacity-100" : "opacity-0";
 
     return (
-        <section ref={containerRef} className="relative min-h-screen w-full flex flex-col pt-24 px-6 md:px-12 bg-[rgb(30,30,30)] text-white overflow-hidden">
+        <section ref={containerRef} className="relative min-h-screen w-full flex flex-col pt-24 px-6 md:px-12 bg-background text-white overflow-hidden">
 
             {/* Main Content */}
             <div className="w-full max-w-7xl mx-auto z-10">
@@ -142,17 +142,17 @@ const Hero = memo(function Hero() {
                     <div className="relative z-20 max-w-2xl">
                         {/* Decorative Element */}
                         <div
-                            className={`${fadeClass} absolute -left-4 top-0 w-1 h-24 bg-gradient-to-b from-orange-500 to-transparent rounded-full`}
+                            className={`${fadeClass} absolute -left-4 top-0 w-1 h-24 bg-gradient-to-b from-accent to-transparent rounded-full`}
                             style={fadeInStyle(0.3)}
                         />
 
                         <h1
-                            className={`${fadeClass} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] relative`}
+                            className={`${fadeClass} text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight leading-[1.1] relative`}
                             style={fadeInStyle(0.2)}
                         >
                             <span className="relative inline-block">
                                 Vextra Tech : Votre
-                                <div className="absolute -bottom-2 left-0 w-20 h-1 bg-gradient-to-r from-orange-500 to-transparent animate-pulse" />
+                                <div className="absolute -bottom-2 left-0 w-20 h-1 bg-gradient-to-r from-accent to-transparent animate-pulse" />
                             </span>
                             <br />
                             <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
@@ -161,7 +161,7 @@ const Hero = memo(function Hero() {
                             <br />
                             <span className="relative">
                                 de Choix
-                                <span className="absolute -top-2 -right-8 text-orange-500 text-2xl opacity-80">✦</span>
+                                <span className="absolute -top-2 -right-8 text-accent text-2xl opacity-80">✦</span>
                             </span>
                         </h1>
 
@@ -194,7 +194,7 @@ const Hero = memo(function Hero() {
                             className={`stat-item ${fadeClass} flex flex-col gap-2 group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all duration-300`}
                             style={fadeInStyle(0.3)}
                         >
-                            <span className="text-3xl lg:text-4xl font-bold text-orange-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">
+                            <span className="text-3xl lg:text-4xl font-heading font-bold text-accent group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">
                                 {count1}
                             </span>
                             <span className="text-xs lg:text-sm text-gray-300 font-medium leading-tight">Valeur des activités</span>
@@ -203,7 +203,7 @@ const Hero = memo(function Hero() {
                             className={`stat-item ${fadeClass} flex flex-col gap-2 group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all duration-300`}
                             style={fadeInStyle(0.4)}
                         >
-                            <span className="text-3xl lg:text-4xl font-bold text-blue-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                            <span className="text-3xl lg:text-4xl font-heading font-bold text-blue-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                                 {count2}
                             </span>
                             <span className="text-xs lg:text-sm text-gray-300 font-medium leading-tight">Augmentation de productivité</span>
@@ -212,7 +212,7 @@ const Hero = memo(function Hero() {
                             className={`stat-item ${fadeClass} flex flex-col gap-2 group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all duration-300`}
                             style={fadeInStyle(0.5)}
                         >
-                            <span className="text-3xl lg:text-4xl font-bold text-green-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
+                            <span className="text-3xl lg:text-4xl font-heading font-bold text-green-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
                                 {count3}
                             </span>
                             <span className="text-xs lg:text-sm text-gray-300 font-medium leading-tight">Amélioration de la précision</span>
@@ -221,7 +221,7 @@ const Hero = memo(function Hero() {
                             className={`stat-item ${fadeClass} flex flex-col gap-2 group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all duration-300`}
                             style={fadeInStyle(0.6)}
                         >
-                            <span className="text-3xl lg:text-4xl font-bold text-purple-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                            <span className="text-3xl lg:text-4xl font-heading font-bold text-purple-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
                                 {count4}
                             </span>
                             <span className="text-xs lg:text-sm text-gray-300 font-medium leading-tight">Économies réalisées</span>
@@ -230,7 +230,7 @@ const Hero = memo(function Hero() {
                             className={`stat-item ${fadeClass} flex flex-col gap-2 group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all duration-300`}
                             style={fadeInStyle(0.7)}
                         >
-                            <span className="text-3xl lg:text-4xl font-bold text-pink-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
+                            <span className="text-3xl lg:text-4xl font-heading font-bold text-pink-500 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
                                 {count5}
                             </span>
                             <span className="text-xs lg:text-sm text-gray-300 font-medium leading-tight">Disponibilité</span>

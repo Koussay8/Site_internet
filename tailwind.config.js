@@ -7,7 +7,14 @@ module.exports = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["var(--font-inter)", "sans-serif"],
+                heading: ["var(--font-outfit)", "sans-serif"],
+            },
             colors: {
+                background: "var(--background)",
+                foreground: "var(--foreground)",
+                accent: "var(--accent-orange)",
                 primary: "#8B5CF6",
                 surface: "#FAFAF9",
             },
