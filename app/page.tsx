@@ -1,335 +1,441 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Chatbot from '@/components/Chatbot';
-import Typewriter from '@/components/Typewriter';
+import Header from '@/components/Header';
+import Hero from '@/components/Hero';
+import Footer from '@/components/Footer';
+import Advantages from '@/components/Advantages';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for Chatbot to avoid SSR issues
+const Chatbot = dynamic(() => import('@/components/Chatbot'), { ssr: false });
+
+import {
+  ArrowRight,
+  BarChart3,
+  Building,
+  Calendar,
+  Calculator,
+  Clipboard,
+  FileText,
+  Globe,
+  Mail,
+  MessageSquare,
+  Phone,
+  RefreshCw,
+  Smartphone,
+  Target,
+  Video,
+  AlertCircle,
+  Clock,
+  TrendingDown,
+  CheckCircle,
+  Zap,
+  Users,
+} from 'lucide-react';
+
+const solutions = [
+  { icon: FileText, title: 'CV Profiler', desc: "Recrutez 3x plus vite. L'IA analyse, trie et matche vos CVs." },
+  { icon: Phone, title: 'Agent Téléphonique IA 24/7', desc: 'Réceptionniste IA qui qualifie et prend des RDV. Dupliquez votre voix.' },
+  { icon: MessageSquare, title: 'Chatbot IA Multi-Canal', desc: 'Sur votre site, Instagram, WhatsApp ou Messenger. 24h/24.' },
+  { icon: Clipboard, title: 'Qualification de Dossiers IA', desc: "Qualifiez les dossiers avant la première visite. Vérification d'éligibilité." },
+  { icon: Mail, title: 'Emailing IA Personnalisé', desc: 'Emails hyper-personnalisés qui convertissent vraiment.' },
+  { icon: Globe, title: 'Site Web Premium', desc: '1ère page Google. SEO optimisé, espace client, e-commerce.' },
+  { icon: Calendar, title: 'Automatisation RDV & Tâches', desc: 'Libérez 10h par semaine. RDV, rappels, tâches automatiques.' },
+  { icon: Calculator, title: 'Calculateur Éligibilité & Devis', desc: 'Pré-qualifiez et générez des devis en 30 secondes.' },
+  { icon: Building, title: 'Visualiseur 3D Architecture', desc: 'Plans en visites virtuelles époustouflantes.' },
+  { icon: Video, title: 'Vidéos Marketing IA 4K', desc: 'Pubs virales sans équipe vidéo. Technologies Veo.' },
+  { icon: RefreshCw, title: 'Simulation Avant/Après', desc: 'Simulations photo-réalistes. +40% de conversions.' },
+  { icon: Smartphone, title: 'Agent WhatsApp B2B', desc: 'Commandes WhatsApp → Bon de commande fournisseur.' },
+  { icon: Target, title: 'Génération Leads Ads', desc: 'Leads qualifiés via Meta, TikTok, Google Ads.' },
+  { icon: BarChart3, title: 'Analyse Data & IA', desc: 'Analyse poussée de vos données. Amélioration continue.' },
+];
+
+const problems = [
+  {
+    icon: Clock,
+    title: 'Vous perdez des clients car vous ne répondez pas assez vite?',
+    description: 'Pendant que vous dormez, vos concurrents capturent VOS clients. Chaque appel manqué = 500€ minimum de CA perdu.',
+    stat: '67% des clients contactent un concurrent si pas de réponse en 5 minutes'
+  },
+  {
+    icon: TrendingDown,
+    title: 'Vos équipes passent 60% de leur temps sur des tâches répétitives?',
+    description: 'Répondre aux mêmes questions, saisir des données, qualifier des leads... Vos talents gaspillent leur potentiel.',
+    stat: '15h/semaine perdues par employé sur des tâches automatisables'
+  },
+  {
+    icon: AlertCircle,
+    title: 'Vos concurrents utilisent déjà l\'IA pendant que vous réfléchissez?',
+    description: 'Ils servent plus de clients, avec moins d\'équipe, en facturant plus cher. L\'écart se creuse chaque jour.',
+    stat: '43% de vos concurrents ont déjà adopté l\'IA en 2025'
+  }
+];
+
+const transformationSteps = [
+  {
+    phase: 'Semaine 1',
+    title: 'Quick Win',
+    description: 'Premiers résultats visibles. Votre agent IA répond aux premières demandes.',
+    metrics: ['Premier lead qualifié', 'Temps de réponse divisé par 10', 'Équipe libérée'],
+    color: 'from-orange-400 to-orange-500'
+  },
+  {
+    phase: 'Mois 1-3',
+    title: 'Compound',
+    description: 'Optimisation continue. L\'IA apprend de chaque interaction et s\'améliore.',
+    metrics: ['30% de productivité en plus', 'ROI positif', 'Processus optimisés'],
+    color: 'from-orange-500 to-orange-600'
+  },
+  {
+    phase: 'Mois 3-6',
+    title: 'Advantage',
+    description: 'Avantage compétitif établi. Vous servez plus de clients que vos concurrents.',
+    metrics: ['2x plus de leads', 'Service 24/7', 'Satisfaction client +40%'],
+    color: 'from-orange-600 to-red-500'
+  },
+  {
+    phase: 'Mois 6+',
+    title: '10x',
+    description: 'Transformation complète. Votre business tourne pendant que vous dormez.',
+    metrics: ['Croissance exponentielle', 'Équipe concentrée sur valeur', 'Leadership du marché'],
+    color: 'from-red-500 to-red-600'
+  }
+];
+
+const valueStack = [
+  { item: 'Développement agents IA sur-mesure', value: '50 000€', included: true },
+  { item: 'Intégration à vos outils existants', value: '15 000€', included: true },
+  { item: 'Formation complète de vos équipes', value: '8 000€', included: true },
+  { item: 'Support prioritaire 24/7 (1 an)', value: '12 000€', included: true },
+  { item: 'Optimisations et mises à jour', value: '6 000€', included: true },
+];
 
 export default function Home() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Check if user is logged in
+  // Force scroll to top on page load
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setIsLoggedIn(true);
+    if (typeof window !== 'undefined') {
+      // Remove any hash from URL
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+      // Force scroll to top immediately
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // Enable smooth scrolling after page has loaded
+      setTimeout(() => {
+        document.documentElement.classList.add('loaded');
+      }, 100);
     }
   }, []);
 
-  // Scroll to top on page load/refresh
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash === '') {
-      window.scrollTo(0, 0);
-    }
-  }, []);
-
-  // Handle scroll for header
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Stats counter animation
-  useEffect(() => {
-    const animateCounters = () => {
-      const counters = document.querySelectorAll('.stat-number');
-      counters.forEach((counter) => {
-        const target = parseInt(counter.getAttribute('data-target') || '0');
-        const duration = 2000;
-        const step = target / (duration / 16);
-        let current = 0;
-
-        const updateCounter = () => {
-          current += step;
-          if (current < target) {
-            counter.textContent = Math.floor(current).toString();
-            requestAnimationFrame(updateCounter);
-          } else {
-            counter.textContent = target.toString();
-          }
-        };
-        updateCounter();
-      });
-    };
-
-    const timer = setTimeout(animateCounters, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Scroll animations
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible-el');
-        }
-      });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.hidden-el').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  const totalValue = valueStack.reduce((sum, item) => sum + parseInt(item.value.replace(/[€\s]/g, '')), 0);
 
   return (
     <>
-      {/* Header */}
-      <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
-        <div className="container navbar">
-          <a href="#" className="logo">Nova<span className="text-gradient">Solutions</span></a>
-          <nav>
-            <ul className={`nav-links ${mobileMenuOpen ? 'active' : ''}`}>
-              <li><a href="#agents" onClick={() => setMobileMenuOpen(false)}>Nos Agents</a></li>
-              <li><a href="#services" onClick={() => setMobileMenuOpen(false)}>Services</a></li>
-              <li><a href="#about" onClick={() => setMobileMenuOpen(false)}>À propos</a></li>
-              <li><a href="#contact" className="btn btn-outline nav-btn" onClick={() => setMobileMenuOpen(false)}>Contact</a></li>
-              <li>
-                {isLoggedIn ? (
-                  <Link href="/dashboard" className="btn btn-primary nav-btn" onClick={() => setMobileMenuOpen(false)}>Mon Dashboard</Link>
-                ) : (
-                  <Link href="/login" className="btn btn-primary nav-btn" onClick={() => setMobileMenuOpen(false)}>Se Connecter</Link>
-                )}
-              </li>
-            </ul>
-          </nav>
-          <div className={`hamburger ${mobileMenuOpen ? 'active' : ''}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </header>
+      <main className="min-h-screen bg-[rgb(30,30,30)]">
+        <Header />
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-bg"></div>
-        <div className="container hero-content">
-          <span className="badge">🚀 Déjà 47+ entreprises accompagnées</span>
-          <h1 className="hero-title">L&apos;IA au service de votre <br /><Typewriter text="Croissance" className="text-gradient" /></h1>
+        {/* 1. HERO SECTION */}
+        <Hero />
 
-          {/* AIVoiceAgent Promo Banner */}
-          <a
-            href="https://aivoicedemo.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="voice-agent-promo"
-          >
-            <div className="promo-glow"></div>
-            <div className="promo-content">
-              <div className="promo-icon-wrapper">
-                <span className="promo-icon">📞</span>
-                <span className="promo-pulse"></span>
-              </div>
-              <div className="promo-text">
-                <span className="promo-badge">🔥 Notre Best-Seller</span>
-                <p className="promo-title">
-                  <strong>Assistante Vocale IA 24h/7</strong> — Une voix chaleureuse qui ne dort jamais
-                </p>
-                <p className="promo-features">
-                  <span className="highlight">Déployée sur votre numéro en quelques minutes</span> • Aucune configuration de votre part • On s'occupe de tout
-                </p>
-              </div>
-              <span className="promo-cta">
-                Essayer la Démo <span className="arrow">→</span>
-              </span>
-            </div>
-          </a>
+        {/* 2. ADVANTAGES */}
+        <Advantages />
 
-          <p className="hero-subtitle">Transformez vos opérations avec des automatisations intelligentes. Nous construisons le futur de votre entreprise, aujourd&apos;hui.</p>
-          <div className="hero-btns">
-            <a href="#contact" className="btn btn-primary">Démarrer le Projet</a>
-            <a href="#agents" className="btn btn-outline">Voir nos Agents IA</a>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="stats-section">
-        <div className="container stats-grid">
-          <div className="stat-item">
-            <span className="stat-number" data-target="47">0</span>
-            <span className="stat-label">Entreprises Accompagnées</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="12500">0</span>
-            <span className="stat-label">Heures Économisées</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="98">0</span>
-            <span className="stat-label">% Satisfaction Client</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="300">0</span>
-            <span className="stat-label">% ROI Moyen</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Services IA Section */}
-      <section id="agents" className="section-padding">
-        <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-subtitle">Nos Solutions IA</span>
-            <h2 className="section-title">Automatisez & <span className="text-gradient">Développez</span></h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto' }}>14 solutions clé en main, déployées en 2-4 semaines, pour transformer votre activité.</p>
+        {/* 3. PROBLEM-AGITATE SECTION */}
+        <section className="w-full py-32 px-12 bg-[rgb(20,20,22)] text-white relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute top-[20%] right-[10%] w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[150px]" />
           </div>
 
-          <div className="agents-grid">
-            {[
-              { icon: '👥', title: 'CV Profiler', desc: 'Recrutez 3x plus vite. L\'IA analyse, trie et matche vos CVs.' },
-              { icon: '📞', title: 'Agent Téléphonique IA 24/7', desc: 'Réceptionniste IA qui qualifie et prend des RDV. Dupliquez votre voix.' },
-              { icon: '💬', title: 'Chatbot IA Multi-Canal', desc: 'Sur votre site, Instagram, WhatsApp ou Messenger. 24h/24.' },
-              { icon: '📋', title: 'Qualification de Dossiers IA', desc: 'Qualifiez les dossiers avant la première visite. Vérification d\'éligibilité.' },
-              { icon: '📧', title: 'Emailing IA Personnalisé', desc: 'Emails hyper-personnalisés qui convertissent vraiment.' },
-              { icon: '🌐', title: 'Site Web Premium', desc: '1ère page Google. SEO optimisé, espace client, e-commerce.' },
-              { icon: '📅', title: 'Automatisation RDV & Tâches', desc: 'Libérez 10h par semaine. RDV, rappels, tâches automatiques.' },
-              { icon: '💰', title: 'Calculateur Éligibilité & Devis', desc: 'Pré-qualifiez et générez des devis en 30 secondes.' },
-              { icon: '🏠', title: 'Visualiseur 3D Architecture', desc: 'Plans en visites virtuelles époustouflantes.' },
-              { icon: '🎬', title: 'Vidéos Marketing IA 4K', desc: 'Pubs virales sans équipe vidéo. Technologies Veo.' },
-              { icon: '🔄', title: 'Simulation Avant/Après', desc: 'Simulations photo-réalistes. +40% de conversions.' },
-              { icon: '📱', title: 'Agent WhatsApp B2B', desc: 'Commandes WhatsApp → Bon de commande fournisseur.' },
-              { icon: '🎯', title: 'Génération Leads Ads', desc: 'Leads qualifiés via Meta, TikTok, Google Ads.' },
-              { icon: '📊', title: 'Analyse Data & IA', desc: 'Analyse poussée de vos données. Amélioration continue.' },
-            ].map((agent, i) => (
-              <div key={i} className="agent-card hidden-el">
-                <div className="agent-icon">{agent.icon}</div>
-                <h3>{agent.title}</h3>
-                <p className="agent-desc">{agent.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '48px' }}>
-            <a href="#contact" className="btn btn-primary" style={{ fontSize: '18px', padding: '16px 32px' }}>
-              🚀 Débloquer ces solutions
-            </a>
-            <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '14px' }}>Réservez un appel stratégique gratuit de 15 minutes</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="section-padding" style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-subtitle">Notre Approche</span>
-            <h2 className="section-title">Comment nous <span className="text-gradient">travaillons</span></h2>
-          </div>
-
-          <div className="cards-grid">
-            {[
-              { icon: '🔍', title: '1. Audit Gratuit', desc: 'Nous analysons vos processus actuels et identifions les opportunités d\'automatisation à fort ROI.' },
-              { icon: '⚙️', title: '2. Déploiement Rapide', desc: 'En 2-4 semaines, votre agent IA est opérationnel et intégré à vos outils existants.' },
-              { icon: '📈', title: '3. Optimisation Continue', desc: 'Nous mesurons les résultats et améliorons l\'IA en continu pour maximiser votre ROI.' },
-            ].map((service, i) => (
-              <div key={i} className="card hidden-el">
-                <div className="card-icon">{service.icon}</div>
-                <h3>{service.title}</h3>
-                <p>{service.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="section-padding">
-        <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-subtitle">Témoignages</span>
-            <h2 className="section-title">Ils nous font <span className="text-gradient">confiance</span></h2>
-          </div>
-
-          <div className="testimonials-grid">
-            {[
-              { text: '"Nos no-shows ont chuté de 70%. L\'IA filtre parfaitement les vrais patients. Je recommande à 100%."', name: 'Dr. Martin', company: 'Cabinet Dentaire Lyon' },
-              { text: '"Je ne rate plus un seul appel même quand je suis sous une baignoire. Un investissement rentabilisé en 1 mois."', name: 'Jean-Pierre R.', company: 'Plombier Indépendant' },
-              { text: '"40% de temps gagné. Mes agents se concentrent sur les visites, pas les questions basiques."', name: 'Sophie L.', company: 'Agence Immobilière Paris' },
-            ].map((testimonial, i) => (
-              <div key={i} className="testimonial-card hidden-el">
-                <p className="testimonial-text">{testimonial.text}</p>
-                <div className="testimonial-author">
-                  <strong>{testimonial.name}</strong>
-                  <span>{testimonial.company}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="section-padding" style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <div className="container about-grid">
-          <div className="about-img"></div>
-          <div className="about-content">
-            <span className="section-subtitle">À Propos de NovaSolutions</span>
-            <h2 className="section-title">L&apos;Intelligence <br />au service de l&apos;Humain</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Chez NovaSolutions, nous croyons que la technologie ne doit pas remplacer l&apos;humain, mais l&apos;augmenter. Notre mission est de démocratiser l&apos;accès aux outils d&apos;IA les plus puissants pour les entreprises ambitieuses.
-            </p>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-              Une approche ouverte, transparente et résolument tournée vers l&apos;avenir.
-            </p>
-            <a href="#contact" className="btn btn-primary">Discutons de votre projet</a>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="section-padding">
-        <div className="container">
-          <div className="card" style={{ maxWidth: '600px', margin: '0 auto', padding: '3rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', fontSize: '2.5rem' }}>Parlons de votre <span className="text-gradient">Projet</span></h2>
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem' }}>Remplissez ce formulaire pour une consultation gratuite.</p>
-
-            <ContactForm />
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer>
-        <div className="container">
-          <div className="footer-content">
-            <div>
-              <h3 className="logo">Nova<span className="text-gradient">Solutions</span></h3>
-              <p style={{ color: 'var(--text-muted)', maxWidth: '300px', fontSize: '0.9rem', marginTop: '1rem' }}>
-                Agence d&apos;intelligence artificielle et d&apos;automatisation.
+          <div className="max-w-7xl mx-auto relative z-10">
+            <div className="text-center mb-20">
+              <span className="text-red-500 uppercase tracking-wider text-sm font-semibold">La Vérité</span>
+              <h2 className="text-5xl md:text-6xl font-bold mt-4 mb-6">
+                Ces <span className="bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">problèmes</span> vous coûtent cher
+              </h2>
+              <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+                Pendant que vous hésitez, vos concurrents automatisent et vous dépassent.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '3rem' }}>
-              <ul style={{ color: 'var(--text-muted)', lineHeight: 2 }}>
-                <li style={{ color: 'white', fontWeight: 600, marginBottom: '0.5rem' }}>Menu</li>
-                <li><a href="#agents">Nos Agents</a></li>
-                <li><a href="#services">Services</a></li>
-                <li><a href="#contact">Contact</a></li>
-              </ul>
-              <ul style={{ color: 'var(--text-muted)', lineHeight: 2 }}>
-                <li style={{ color: 'white', fontWeight: 600, marginBottom: '0.5rem' }}>Légal</li>
-                <li><a href="#">Confidentialité</a></li>
-                <li><a href="#">Mentions Légales</a></li>
-              </ul>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {problems.map((problem, i) => {
+                const Icon = problem.icon;
+                return (
+                  <div key={i} className="bg-white/5 border border-red-500/20 rounded-3xl p-8 backdrop-blur-sm hover:border-red-500/40 transition-all">
+                    <div className="flex items-center justify-center w-16 h-16 bg-red-500/10 rounded-2xl mb-6">
+                      <Icon className="w-8 h-8 text-red-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4">{problem.title}</h3>
+                    <p className="text-gray-400 mb-6 leading-relaxed">{problem.description}</p>
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                      <p className="text-red-300 text-sm font-semibold">{problem.stat}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-16 text-center">
+              <p className="text-2xl md:text-3xl font-bold text-white">
+                Mais il y a une <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">solution</span>...
+              </p>
             </div>
           </div>
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', borderTop: '1px solid #222', paddingTop: '2rem' }}>
-            © 2025 NovaSolutions. Tous droits réservés.
-          </div>
-        </div>
-      </footer>
+        </section>
 
-      {/* Chatbot */}
-      <Chatbot />
+        {/* 4. SERVICES/SOLUTIONS SECTION */}
+        <section id="services" className="w-full px-6 py-32 md:px-12 bg-[radial-gradient(ellipse_at_top,_rgba(251,146,60,0.18),_transparent_60%)] text-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-orange-300">
+                Nos Solutions IA
+              </span>
+              <h2 className="text-4xl md:text-6xl font-bold mt-6 mb-6">
+                14 Solutions Pour{' '}
+                <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                  Automatiser & Développer
+                </span>
+              </h2>
+              <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                Solutions clé en main, déployées en 2-4 semaines, pour transformer votre activité.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {solutions.map((solution) => {
+                const Icon = solution.icon;
+                return (
+                  <div
+                    key={solution.title}
+                    className="group h-full rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:bg-white/10"
+                  >
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+                        <Icon className="h-6 w-6 text-orange-300" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">{solution.title}</h3>
+                    </div>
+                    <p className="text-sm text-gray-300 leading-relaxed">{solution.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. VALUE STACK SECTION */}
+        <section className="w-full py-32 px-12 bg-[rgb(30,30,30)] text-white">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-orange-500 uppercase tracking-wider text-sm font-semibold">Investissement</span>
+              <h2 className="text-5xl md:text-6xl font-bold mt-4 mb-6">
+                Une valeur de <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">{totalValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}€</span>
+              </h2>
+              <p className="text-gray-400 text-lg">
+                Tout ce dont vous avez besoin pour transformer votre business avec l'IA
+              </p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-10 backdrop-blur-sm">
+              <div className="space-y-6 mb-8">
+                {valueStack.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between pb-6 border-b border-white/10 last:border-0">
+                    <div className="flex items-center gap-4">
+                      <CheckCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
+                      <span className="text-white font-medium">{item.item}</span>
+                    </div>
+                    <span className="text-gray-400 font-semibold">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t-2 border-orange-500/30 pt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xl font-bold text-white">Valeur totale:</span>
+                  <span className="text-2xl font-bold text-gray-400 line-through">{totalValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}€</span>
+                </div>
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-2xl font-bold text-white">Votre investissement:</span>
+                  <span className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                    12 000€<span className="text-2xl">/an</span>
+                  </span>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-6 text-center">
+                  <p className="text-orange-300 font-semibold text-lg">
+                    Soit seulement 1 000€/mois pour une solution complète qui génère un ROI de 3-5x
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <p className="text-gray-500 italic">
+                La vraie question n'est pas "Puis-je me le permettre?" mais "Puis-je me permettre de ne PAS le faire?"
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. TESTIMONIALS SECTION */}
+        <section className="w-full py-32 px-12 bg-white/5 text-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-orange-500 uppercase tracking-wider text-sm font-semibold">Témoignages</span>
+              <h2 className="text-5xl md:text-6xl font-bold mt-4">
+                Ils nous font <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">confiance</span>
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  text: '"Nos no-shows ont chuté de 70%. L\'IA filtre parfaitement les vrais patients. Je recommande à 100%."',
+                  name: 'Dr. Martin',
+                  company: 'Cabinet Dentaire Lyon',
+                  result: '-70% no-shows'
+                },
+                {
+                  text: '"Je ne rate plus un seul appel même quand je suis sous une baignoire. Un investissement rentabilisé en 1 mois."',
+                  name: 'Jean-Pierre R.',
+                  company: 'Plombier Indépendant',
+                  result: 'ROI en 30 jours'
+                },
+                {
+                  text: '"40% de temps gagné. Mes agents se concentrent sur les visites, pas les questions basiques."',
+                  name: 'Sophie L.',
+                  company: 'Agence Immobilière Paris',
+                  result: '+40% productivité'
+                },
+              ].map((testimonial, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm relative hover:border-orange-500/30 transition-all">
+                  <div className="absolute top-6 right-6 bg-orange-500/20 border border-orange-500/30 rounded-full px-4 py-1">
+                    <span className="text-orange-300 text-xs font-bold">{testimonial.result}</span>
+                  </div>
+                  <div className="text-6xl text-orange-500 opacity-20 font-serif mb-4">"</div>
+                  <p className="text-white italic mb-6 relative z-10">{testimonial.text}</p>
+                  <div>
+                    <strong className="text-white">{testimonial.name}</strong>
+                    <p className="text-gray-400 text-sm">{testimonial.company}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7. TRANSFORMATION SECTION */}
+        <section className="w-full py-32 px-12 bg-[rgb(30,30,30)] text-white relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute bottom-[10%] left-[20%] w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px]" />
+          </div>
+
+          <div className="max-w-7xl mx-auto relative z-10">
+            <div className="text-center mb-20">
+              <span className="text-orange-500 uppercase tracking-wider text-sm font-semibold">Votre Roadmap</span>
+              <h2 className="text-5xl md:text-6xl font-bold mt-4 mb-6">
+                De 0 à <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">10x</span> en 6 mois
+              </h2>
+              <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+                Voici exactement ce qui va se passer après votre décision aujourd'hui
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {transformationSteps.map((step, i) => (
+                <div key={i} className="relative">
+                  {i < transformationSteps.length - 1 && (
+                    <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-orange-500/50 to-transparent" />
+                  )}
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-sm hover:bg-white/10 transition-all h-full">
+                    <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} text-white font-bold text-lg mb-4`}>
+                      {i + 1}
+                    </div>
+                    <div className="text-orange-400 text-sm font-semibold mb-2">{step.phase}</div>
+                    <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+                    <p className="text-gray-400 mb-6 leading-relaxed">{step.description}</p>
+                    <ul className="space-y-2">
+                      {step.metrics.map((metric, j) => (
+                        <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
+                          <Zap className="w-4 h-4 text-orange-500" />
+                          {metric}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 8. SECONDARY CTA */}
+        <section className="w-full py-24 px-12 bg-gradient-to-b from-[rgb(30,30,30)] to-[rgb(20,20,22)] text-white">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="flex justify-center mb-8 -space-x-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-4 border-[rgb(30,30,30)] flex items-center justify-center"
+                >
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+              ))}
+            </div>
+            <div className="inline-block bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-2 mb-6">
+              <span className="text-orange-300 text-sm font-semibold">+150 entreprises nous font confiance</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Prêt à rejoindre les entreprises qui ont<br />
+              <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+                transformé leur business avec l'IA?
+              </span>
+            </h2>
+            <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">
+              Chaque jour qui passe est un jour de retard sur vos concurrents.
+              Prenez votre décision maintenant.
+            </p>
+            <a
+              href="#contact"
+              className="inline-flex items-center gap-3 px-12 py-6 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full font-bold text-white text-xl hover:scale-105 transition-transform shadow-2xl shadow-orange-500/50"
+            >
+              Oui, je veux transformer mon business
+              <ArrowRight className="w-6 h-6" />
+            </a>
+            <p className="text-gray-500 mt-6 text-sm">
+              Consultation stratégique gratuite de 15 minutes · Sans engagement
+            </p>
+          </div>
+        </section>
+
+        {/* 9. CONTACT SECTION */}
+        <section id="contact" className="w-full py-32 px-12 bg-[rgb(30,30,30)]">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-12 backdrop-blur-sm">
+              <h2 className="text-5xl font-bold text-center mb-4 text-white">
+                Parlons de votre <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Projet</span>
+              </h2>
+              <p className="text-center text-gray-400 mb-10">Remplissez ce formulaire pour une consultation gratuite.</p>
+
+              <ContactForm />
+            </div>
+          </div>
+        </section>
+
+        {/* 10. FOOTER */}
+        <Footer />
+
+        {/* Chatbot */}
+        <Chatbot />
+      </main>
     </>
   );
 }
 
-// Contact Form Component
+// Contact Form Component with Backend Integration
 function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
@@ -358,13 +464,38 @@ function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <input type="text" name="nom" placeholder="Nom Complet" required style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '1rem', color: 'white', borderRadius: '8px' }} />
-      <input type="email" name="email" placeholder="Email Professionnel" required style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '1rem', color: 'white', borderRadius: '8px' }} />
-      <textarea name="message" placeholder="Votre Message" rows={4} required style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '1rem', color: 'white', borderRadius: '8px' }}></textarea>
-      <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={status === 'sending'}>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <input
+        type="text"
+        name="nom"
+        placeholder="Nom Complet"
+        required
+        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Email Professionnel"
+        required
+        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+      />
+      <textarea
+        name="message"
+        placeholder="Votre Message"
+        rows={6}
+        required
+        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors resize-none"
+      ></textarea>
+      <button
+        type="submit"
+        className="w-full py-4 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full font-semibold text-white hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={status === 'sending'}
+      >
         {status === 'sending' ? 'Envoi...' : status === 'sent' ? '✓ Envoyé !' : 'Envoyer'}
       </button>
+      {status === 'error' && (
+        <p className="text-red-400 text-center text-sm">Une erreur s'est produite. Veuillez réessayer.</p>
+      )}
     </form>
   );
 }

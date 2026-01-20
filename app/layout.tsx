@@ -14,15 +14,15 @@ const outfit = Outfit({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#030305",
+  themeColor: "#1e1e1e",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
 };
 
 export const metadata: Metadata = {
-  title: "NovaSolutions | Agence d'Automatisation IA",
-  description: "Agence d'automatisations d'IA pour aider les entreprises à innover. +47 entreprises accompagnées.",
+  title: "Vextra Tech | Assistant Virtuel de Choix",
+  description: "Transformez votre entreprise avec l'intelligence artificielle. Des résultats mesurables, une disponibilité 24/7.",
 };
 
 export default function RootLayout({

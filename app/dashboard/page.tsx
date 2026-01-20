@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Loader2, ArrowRight, LogOut, Sparkles, Plus, X, Mic, Calendar, ExternalLink, Play, MessageSquare, Mail, Globe, FileText, Box, Video, Image as ImageIcon, MessageCircle } from 'lucide-react';
-import Chatbot from '@/components/Chatbot';
 
 interface User {
     id: string;
@@ -689,8 +688,6 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Chatbot */}
-            <Chatbot />
         </div>
     );
 }
