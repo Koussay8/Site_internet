@@ -32,6 +32,7 @@ import {
   CheckCircle,
   Zap,
   Users,
+  Check,
 } from 'lucide-react';
 
 const solutions = [
@@ -131,6 +132,34 @@ export default function Home() {
     }
   }, []);
 
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStatus('sending');
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const firstName = formData.get('firstname') as string;
+    const lastName = formData.get('lastname') as string;
+
+    try {
+      await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${firstName} ${lastName}`.trim(),
+          email: formData.get('email'),
+          message: formData.get('project'),
+        }),
+      });
+      setStatus('sent');
+      form.reset();
+    } catch {
+      setStatus('error');
+    }
+  };
+
   const totalValue = valueStack.reduce((sum, item) => sum + parseInt(item.value.replace(/[€\s]/g, '')), 0);
 
   return (
@@ -227,55 +256,54 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 5. VALUE STACK SECTION */}
-        <section className="w-full py-32 px-12 bg-[rgb(30,30,30)] text-white">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <span className="text-orange-500 uppercase tracking-wider text-sm font-semibold">Investissement</span>
-              <h2 className="text-5xl md:text-6xl font-bold mt-4 mb-6">
-                Une valeur de <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">{totalValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}€</span>
-              </h2>
-              <p className="text-gray-400 text-lg">
-                Tout ce dont vous avez besoin pour transformer votre business avec l'IA
-              </p>
-            </div>
+        {/* 5. PRICING / VALUE STACK */}
+        <section className="w-full py-32 px-6 md:px-12 bg-[rgb(30,30,30)] relative">
+          <div className="max-w-5xl mx-auto">
+            <div className="relative bg-[#0F0F10] border border-white/10 rounded-[40px] p-8 md:p-16 overflow-hidden">
+              {/* Background Effect */}
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600/10 blur-[100px] rounded-full pointer-events-none"></div>
 
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-10 backdrop-blur-sm">
-              <div className="space-y-6 mb-8">
-                {valueStack.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between pb-6 border-b border-white/10 last:border-0">
-                    <div className="flex items-center gap-4">
-                      <CheckCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
-                      <span className="text-white font-medium">{item.item}</span>
+              <div className="flex flex-col lg:flex-row gap-12 relative z-10">
+                <div className="lg:w-1/2">
+                  <h2 className="text-4xl font-bold mb-8">L'offre <span className="text-orange-500">Ultime</span></h2>
+                  <div className="space-y-6">
+                    {valueStack.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                          </div>
+                          <span className="text-gray-300">{item.item}</span>
+                        </div>
+                        <span className="text-gray-500 line-through text-sm">{item.value}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between items-center pt-4 font-mono text-sm text-orange-400">
+                      <span>VALEUR TOTALE</span>
+                      <span>{totalValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}€</span>
                     </div>
-                    <span className="text-gray-400 font-semibold">{item.value}</span>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="border-t-2 border-orange-500/30 pt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xl font-bold text-white">Valeur totale:</span>
-                  <span className="text-2xl font-bold text-gray-400 line-through">{totalValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")}€</span>
-                </div>
-                <div className="flex items-center justify-between mb-8">
-                  <span className="text-2xl font-bold text-white">Votre investissement:</span>
-                  <span className="text-5xl font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                    12 000€<span className="text-2xl">/an</span>
-                  </span>
-                </div>
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-6 text-center">
-                  <p className="text-orange-300 font-semibold text-lg">
-                    Soit seulement 1 000€/mois pour une solution complète qui génère un ROI de 3-5x
-                  </p>
+                <div className="lg:w-1/2 flex flex-col justify-center">
+                  <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-3xl p-8 text-center relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
+
+                    <p className="text-gray-400 text-sm uppercase tracking-widest mb-4">Investissement Annuel</p>
+                    <div className="text-6xl font-bold text-white mb-2">12k€</div>
+                    <p className="text-gray-500 mb-8 text-sm">soit 1 000€ / mois</p>
+
+                    <a href="#contact" className="block w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-orange-500 hover:text-white transition-all duration-300">
+                      Démarrer maintenant
+                    </a>
+
+                    <p className="mt-6 text-xs text-gray-500">
+                      Garantie de satisfaction 30 jours.
+                      Places limitées.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-12 text-center">
-              <p className="text-gray-500 italic">
-                La vraie question n'est pas "Puis-je me le permettre?" mais "Puis-je me permettre de ne PAS le faire?"
-              </p>
             </div>
           </div>
         </section>
@@ -372,55 +400,129 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 8. SECONDARY CTA */}
-        <section className="w-full py-24 px-12 bg-gradient-to-b from-[rgb(30,30,30)] to-[rgb(20,20,22)] text-white">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-8 -space-x-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-4 border-[rgb(30,30,30)] flex items-center justify-center"
-                >
-                  <Users className="w-8 h-8 text-white" />
+        {/* 8. CONTACT SECTION - CONVERTING & WELCOMING */}
+        <section id="contact" className="w-full py-24 px-6 md:px-12 relative bg-[#0F0F10] border-t border-white/5">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none opacity-60"></div>
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none opacity-40"></div>
+
+          <div className="max-w-6xl mx-auto relative z-10">
+            <div className="grid md:grid-cols-2 gap-12 lg:gap-24 items-center">
+
+              {/* Left Side: Persuasive Copy */}
+              <div className="space-y-8">
+                <div>
+                  <span className="inline-block py-1 px-3 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase tracking-wider mb-6">
+                    Consultation Offerte
+                  </span>
+                  <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+                    Prêt à passer à la <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">vitesse supérieure ?</span>
+                  </h2>
+                  <p className="text-lg text-gray-400 leading-relaxed">
+                    Ne laissez pas vos questions sans réponse. Discutons de vos objectifs et voyons comment l'IA peut concrètement transformer votre activité dès ce mois-ci.
+                  </p>
                 </div>
-              ))}
-            </div>
-            <div className="inline-block bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-2 mb-6">
-              <span className="text-orange-300 text-sm font-semibold">+150 entreprises nous font confiance</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Prêt à rejoindre les entreprises qui ont<br />
-              <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                transformé leur business avec l'IA?
-              </span>
-            </h2>
-            <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">
-              Chaque jour qui passe est un jour de retard sur vos concurrents.
-              Prenez votre décision maintenant.
-            </p>
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-3 px-12 py-6 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full font-bold text-white text-xl hover:scale-105 transition-transform shadow-2xl shadow-orange-500/50"
-            >
-              Oui, je veux transformer mon business
-              <ArrowRight className="w-6 h-6" />
-            </a>
-            <p className="text-gray-500 mt-6 text-sm">
-              Consultation stratégique gratuite de 15 minutes · Sans engagement
-            </p>
-          </div>
-        </section>
 
-        {/* 9. CONTACT SECTION */}
-        <section id="contact" className="w-full py-32 px-12 bg-[rgb(30,30,30)]">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-12 backdrop-blur-sm">
-              <h2 className="text-5xl font-bold text-center mb-4 text-white">
-                Parlons de votre <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">Projet</span>
-              </h2>
-              <p className="text-center text-gray-400 mb-10">Remplissez ce formulaire pour une consultation gratuite.</p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-orange-500/20 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white">Réponse sous 24h</p>
+                      <p className="text-sm text-gray-500">Une équipe réactive à votre écoute</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-orange-500/20 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white">Audit gratuit</p>
+                      <p className="text-sm text-gray-500">Analyse rapide de votre potentiel IA</p>
+                    </div>
+                  </div>
+                </div>
 
-              <ContactForm />
+                <div className="flex items-center gap-4 text-sm text-gray-500 pt-4 border-t border-white/10">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0F0F10] bg-gray-700"></div>
+                    ))}
+                  </div>
+                  <p>Déjà <span className="text-white font-bold">150+ entreprises</span> accompagnées</p>
+                </div>
+              </div>
+
+              {/* Right Side: High Converting Form */}
+              <div className="bg-[#1A1A1C] p-8 md:p-10 rounded-[30px] border border-white/10 shadow-2xl relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-[32px] blur opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+
+                <form className="relative space-y-5" onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300 ml-1">Prénom</label>
+                      <input
+                        type="text"
+                        name="firstname"
+                        placeholder="Jean"
+                        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:border-orange-500 focus:bg-black/50 outline-none transition-all"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-300 ml-1">Nom</label>
+                      <input
+                        type="text"
+                        name="lastname"
+                        placeholder="Dupont"
+                        className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:border-orange-500 focus:bg-black/50 outline-none transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 ml-1">Email Professionnel</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="jean@entreprise.com"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:border-orange-500 focus:bg-black/50 outline-none transition-all"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300 ml-1">Projet</label>
+                    <textarea
+                      name="project"
+                      rows={3}
+                      placeholder="Je souhaite automatiser..."
+                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:border-orange-500 focus:bg-black/50 outline-none transition-all resize-none"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={status === 'sending'}
+                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-orange-900/20 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 mt-2"
+                  >
+                    {status === 'sending' ? 'Envoi...' : status === 'sent' ? '✓ Envoyé !' : 'Demander mon audit gratuit'}
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+
+                  <p className="text-center text-xs text-gray-500 mt-4">
+                    Sans engagement. Vos données sont sécurisées.
+                  </p>
+                  {status === 'error' && (
+                    <p className="text-red-400 text-center text-sm mt-2">Une erreur s'est produite.</p>
+                  )}
+                </form>
+              </div>
+
             </div>
           </div>
         </section>
@@ -435,67 +537,4 @@ export default function Home() {
   );
 }
 
-// Contact Form Component with Backend Integration
-function ContactForm() {
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setStatus('sending');
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.get('nom'),
-          email: formData.get('email'),
-          message: formData.get('message'),
-        }),
-      });
-      setStatus('sent');
-      form.reset();
-    } catch {
-      setStatus('error');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <input
-        type="text"
-        name="nom"
-        placeholder="Nom Complet"
-        required
-        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors"
-      />
-      <input
-        type="email"
-        name="email"
-        placeholder="Email Professionnel"
-        required
-        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors"
-      />
-      <textarea
-        name="message"
-        placeholder="Votre Message"
-        rows={6}
-        required
-        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors resize-none"
-      ></textarea>
-      <button
-        type="submit"
-        className="w-full py-4 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full font-semibold text-white hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={status === 'sending'}
-      >
-        {status === 'sending' ? 'Envoi...' : status === 'sent' ? '✓ Envoyé !' : 'Envoyer'}
-      </button>
-      {status === 'error' && (
-        <p className="text-red-400 text-center text-sm">Une erreur s'est produite. Veuillez réessayer.</p>
-      )}
-    </form>
-  );
-}
