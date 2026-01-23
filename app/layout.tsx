@@ -6,11 +6,13 @@ import { AuthProvider } from "@/components/AuthProvider";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap", // Évite le blocage du rendu par les fonts
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
 });
 
 export const viewport: Viewport = {

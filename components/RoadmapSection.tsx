@@ -1,6 +1,6 @@
-'use client';
-
 import { Zap } from 'lucide-react';
+
+// Server Component - contenu statique
 
 const transformationSteps = [
     {

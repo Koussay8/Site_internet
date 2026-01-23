@@ -1,6 +1,5 @@
-import { memo } from "react";
-
-const Advantages = memo(function Advantages() {
+// Server Component - pas besoin de 'use client' car aucune interactivité
+export default function Advantages() {
     return (
         <section className="w-full py-32 px-12 bg-background text-white relative overflow-hidden">
 
@@ -70,6 +69,4 @@ const Advantages = memo(function Advantages() {
             </div>
         </section>
     );
-});
-
-export default Advantages;
+}

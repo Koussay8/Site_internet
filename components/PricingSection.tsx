@@ -1,6 +1,6 @@
-'use client';
-
 import { CheckCircle } from 'lucide-react';
+
+// Server Component - calcul côté serveur, pas d'interactivité
 
 const valueStack = [
     { item: 'Développement agents IA sur-mesure', value: '50 000€', included: true },

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, startTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface User {
@@ -22,7 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Routes that don't require authentication
-const publicRoutes = ['/', '/login', '/register'];
+const publicRoutes = ['/', '/login', '/register', '/services', '/unsubscribe'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -32,21 +32,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        checkAuth();
+        // Différer la vérification auth pour ne pas bloquer le premier rendu
+        // Utilise requestIdleCallback pour éviter de bloquer le main thread
+        const checkAuthDeferred = () => {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => checkAuth(), { timeout: 2000 });
+            } else {
+                // Fallback pour Safari
+                setTimeout(() => checkAuth(), 100);
+            }
+        };
+        
+        checkAuthDeferred();
     }, []);
 
     useEffect(() => {
         // Redirect logic after auth check is complete
         if (!isLoading) {
-            const isPublicRoute = publicRoutes.some(route => pathname === route);
+            const isPublicRoute = publicRoutes.some(route => pathname === route || pathname?.startsWith(route + '/'));
 
-            // Ne pas rediriger si on est déjà sur login ou homepage
+            // Ne pas rediriger si on est sur une route publique
             if (!user && !isPublicRoute && !pathname?.startsWith('/login')) {
-                console.log('AuthProvider: Redirecting to login');
-                router.push('/login');
+                startTransition(() => {
+                    router.push('/login');
+                });
             }
         }
-    }, [isLoading, user, pathname]);
+    }, [isLoading, user, pathname, router]);
 
     const checkAuth = async () => {
         try {

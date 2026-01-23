@@ -1,7 +1,7 @@
 import { Phone } from "lucide-react";
-import { memo } from "react";
 
-const Footer = memo(function Footer() {
+// Server Component - animations CSS pures, pas de JS
+export default function Footer() {
     const marqueeContent = (
         <>
             <span className="text-[12rem] font-heading font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-orange-600">
@@ -50,6 +50,4 @@ const Footer = memo(function Footer() {
 
         </footer>
     );
-});
-
-export default Footer;
+}

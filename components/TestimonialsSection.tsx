@@ -1,4 +1,4 @@
-'use client';
+// Server Component - contenu statique uniquement
 
 export default function TestimonialsSection() {
     return (

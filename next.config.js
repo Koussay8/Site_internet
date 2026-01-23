@@ -1,30 +1,59 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Enable React strict mode for better development
+    // ===== PRODUCTION OPTIMIZATION =====
     reactStrictMode: true,
+    poweredByHeader: false, // Masque "X-Powered-By: Next.js"
 
-    // Optimize images
+    // Mobile dev access
+    allowedDevOrigins: ['http://10.192.34.112:3000'],
+
+    // ===== IMAGE OPTIMIZATION =====
     images: {
         formats: ['image/avif', 'image/webp'],
         deviceSizes: [640, 750, 828, 1080, 1200],
         imageSizes: [16, 32, 48, 64, 96, 128, 256],
+        minimumCacheTTL: 31536000, // 1 an pour les images
     },
 
-    // Experimental features for better performance
+    // ===== EXPERIMENTAL FEATURES =====
     experimental: {
-        // Optimize package imports
-        optimizePackageImports: ['lucide-react', 'recharts'],
+        // Optimisation agressive des imports pour réduire le bundle
+        optimizePackageImports: [
+            'lucide-react',
+            'recharts', 
+            'motion',
+            '@supabase/supabase-js'
+        ],
     },
 
-    // Compiler optimizations
+    // ===== COMPILER OPTIMIZATIONS =====
     compiler: {
-        // Remove console.log in production
-        removeConsole: process.env.NODE_ENV === 'production',
+        // Supprimer console.log en production (garde error/warn)
+        removeConsole: process.env.NODE_ENV === 'production' ? {
+            exclude: ['error', 'warn']
+        } : false,
     },
 
-    // Headers for caching static assets
+    // ===== SECURITY & CACHING HEADERS =====
     async headers() {
         return [
+            {
+                source: '/(.*)',
+                headers: [
+                    {
+                        key: 'X-DNS-Prefetch-Control',
+                        value: 'on'
+                    },
+                    {
+                        key: 'X-Frame-Options',
+                        value: 'SAMEORIGIN'
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff'
+                    },
+                ],
+            },
             {
                 source: '/:all*(svg|jpg|png|webp|avif|woff|woff2)',
                 headers: [
