@@ -25,6 +25,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Vextra Tech | Assistant Virtuel de Choix",
   description: "Transformez votre entreprise avec l'intelligence artificielle. Des résultats mesurables, une disponibilité 24/7.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

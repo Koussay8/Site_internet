@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Grand triangle gauche penché -->
+  <path d="M 150 50 L 50 450 L 320 330 Z" fill="black"/>
+  
+  <!-- Triangle droit penché -->
+  <path d="M 320 150 L 280 450 L 480 350 Z" fill="black"/>
+  
+  <!-- Triangle bas horizontal -->
+  <path d="M 150 400 L 460 550 L 460 400 Z" fill="black"/>
+</svg>
