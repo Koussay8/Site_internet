@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
@@ -50,15 +51,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className={`h-20 flex items-center px-6 border-b border-white/5 ${isSidebarOpen ? 'justify-between' : 'justify-center'}`}>
                     {isSidebarOpen ? (
                         <Link href="/" className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                <span className="font-bold text-white text-sm">V</span>
-                            </div>
+                            <Image
+                                src="/logo-white.png"
+                                alt="Vextra Tech Logo"
+                                width={32}
+                                height={32}
+                                className="object-contain"
+                            />
                             <span className="font-bold text-lg tracking-tight">Vextra Tech</span>
                         </Link>
                     ) : (
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                            <span className="font-bold text-white text-sm">V</span>
-                        </div>
+                        <Link href="/">
+                            <Image
+                                src="/logo-white.png"
+                                alt="Vextra Tech Logo"
+                                width={32}
+                                height={32}
+                                className="object-contain"
+                            />
+                        </Link>
                     )}
 
                     <button
