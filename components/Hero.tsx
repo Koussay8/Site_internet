@@ -90,8 +90,19 @@ function usePrefersReducedMotion() {
 const Hero = memo(function Hero() {
     const containerRef = useRef<HTMLElement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
+    const [isMobile, setIsMobile] = useState(true); // Default to mobile to avoid iframe flash
     const prefersReducedMotion = usePrefersReducedMotion();
     const shouldAnimate = isVisible && !prefersReducedMotion;
+
+    // Detect mobile devices - disable heavy 3D iframe on mobile
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Compteurs animés
     const count1 = useCountUp(2.7, 2000, "M", shouldAnimate, prefersReducedMotion);
@@ -174,16 +185,22 @@ const Hero = memo(function Hero() {
                         </p>
                     </div>
 
-                    {/* 3D Embed in Background - Right Side with lazy loading */}
-                    <div className="absolute right-0 top-0 w-[450px] h-[350px] z-0 hidden md:block opacity-60 mix-blend-screen">
-                        <iframe
-                            title="3D Spinning Cube"
-                            src="https://v0-3-d-spinning-cube.vercel.app"
-                            className="w-full h-full border-0 bg-transparent"
-                            loading="lazy"
-                            allow="fullscreen"
-                        />
-                    </div>
+                    {/* 3D Embed in Background - Right Side - DISABLED on mobile for performance */}
+                    {!isMobile && (
+                        <div className="absolute right-0 top-0 w-[450px] h-[350px] z-0 hidden md:block opacity-60 mix-blend-screen">
+                            <iframe
+                                title="3D Spinning Cube"
+                                src="https://v0-3-d-spinning-cube.vercel.app"
+                                className="w-full h-full border-0 bg-transparent"
+                                loading="lazy"
+                                allow="fullscreen"
+                            />
+                        </div>
+                    )}
+                    {/* Mobile: Light gradient replacement */}
+                    {isMobile && (
+                        <div className="absolute right-0 top-0 w-[200px] h-[200px] z-0 opacity-40 bg-gradient-to-br from-orange-500/30 to-transparent rounded-full blur-3xl" />
+                    )}
 
                 </div>
 

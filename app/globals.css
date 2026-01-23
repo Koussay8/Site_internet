@@ -225,3 +225,87 @@ nextjs-portal {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ============================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* Disable backdrop-blur on mobile - very expensive on mobile GPUs */
+@media (max-width: 768px) {
+
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Replace blur with solid dark background for legibility */
+  .backdrop-blur-sm,
+  .backdrop-blur-md {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+  }
+
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl {
+    background-color: rgba(0, 0, 0, 0.92) !important;
+  }
+}
+
+/* Disable expensive blur effects on mobile */
+@media (max-width: 768px) {
+
+  [class*="blur-[100px]"],
+  [class*="blur-[120px]"],
+  [class*="blur-[150px]"] {
+    filter: none !important;
+    opacity: 0.3 !important;
+  }
+}
+
+/* Reduce animation complexity on mobile */
+@media (max-width: 768px) {
+
+  /* Faster, simpler animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Disable hover transforms on touch devices */
+  [class*="hover:-translate-y"],
+  [class*="hover:scale"],
+  [class*="group-hover:scale"],
+  [class*="group-hover:translate"] {
+    transform: none !important;
+  }
+
+  /* Disable will-change on mobile to save GPU memory */
+  .stat-item:hover,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  [class*="group-hover:scale"],
+  [class*="hover:scale"],
+  [class*="group-hover:translate"] {
+    will-change: auto !important;
+  }
+}
+
+/* Prefer reduced motion - respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
